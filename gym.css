@@ -13,8 +13,8 @@ body {
 /* Hero Section */
 .hero {
     background: url('hero.jpg') no-repeat center center/cover;
-    height: 100vh;
-    position: relative;
+    height: 500vh;
+position: relative;
 }
 
 
@@ -250,7 +250,7 @@ button {
     align-self: center;
     background-color: #00bfa5;
     color: white;
-    border: none;
+    border: #003b8e;
     padding: 12px 25px;
     border-radius: 25px;
     font-size: 16px;
