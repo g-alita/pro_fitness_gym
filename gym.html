@@ -14,17 +14,17 @@
 
     <!-- header section -->
     <header class="hero">
-        <div class="overlay">
+        <div class="overlay" id="home">
             <nav class="navbar">
                 <div class="logo"><img src="logo.png" style="width: auto; height: 60px; display: block;">
                 </div>
 
                 <ul class="nav-links">
-                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="#"><i class="fas fa-users"></i> Our Team</a></li>
-                    <li><a href="#"><i class="fas fa-dumbbell"></i> Services</a></li>
+                    <li><a href="#home"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#team"><i class="fas fa-users"></i> Our Team</a></li>
+                    <li><a href="#services"><i class="fas fa-dumbbell"></i> Services</a></li>
                     <li><a href="gallery.html"><i class="fas fa-images"></i> Gallery</a></li>
-                    <li><a href="#"><i class="fas fa-envelope"></i> Contact</a></li>
+                    <li><a href="#footer"><i class="fas fa-envelope"></i> Contact</a></li>
                 </ul>
             </nav>
 
@@ -77,7 +77,7 @@
     <section class="team-section">
         <h1>Meet Our Team</h1>
 
-        <div class="team-container">
+        <div class="team-container" id="team">
             <div class="team-member">
                 <img src="https://via.placeholder.com/150" alt="Alex Smith">
                 <h2>Alex Smith</h2>
@@ -169,7 +169,7 @@
     </section>
 
     <!-- services -->
-    <div class="team-section">
+    <div class="team-section" id="services">
         <h1>Our Services</h1>
     </div>
     <div class="pricing-container">
@@ -253,7 +253,18 @@
                 <p>Experience our state-of-the-art facilities and expert training with a complimentary trial membership
                     today!</p>
                 <div style="text-align:center; margin-top: 20px;">
-                    <button>
+                    <button class="join-button" style="
+                    display: flex;
+                        justify-content: center;
+                        padding: 15px 40px;
+                        font-size: 20px;
+                        background-color: #007BFF;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        align-items: center;
+                    ">
                         JOIN
                     </button>
                 </div>
@@ -266,7 +277,7 @@
             <h3>Stay Fit, Stay Strong with Pro Fitness</h3>
             <p>Join us and start your fitness journey today!</p>
         </div>
-        <footer style="background-color: #111; color: white; padding: 40px 20px; margin-top: 40px;">
+        <footer id="footer" style="background-color: #111; color: white; padding: 40px 20px; margin-top: 40px;">
             <div style="display: flex; flex-wrap: wrap; justify-content: space-around;">
 
                 <div style="flex: 1 1 200px; margin: 20px;">
