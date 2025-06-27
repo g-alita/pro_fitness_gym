@@ -2,15 +2,115 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Poppins';
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Poppins';
     background-color: #111;
     color: white;
 }
+.box{
+    opacity: 0.79;
+        /* background-color: rgba(0, 0, 0, 0.4); */
+}
 
-/* Hero Section */
+.main {
+    width: 100%;
+    height: 100vh;
+    /* background-color: rgba(0, 0, 0, 0.4); */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content h1 {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 95px;
+    color: #fff;
+    margin-bottom: 50px;
+}
+
+.content a {
+    font-size: 23px;
+    color: #fff;
+    text-decoration: none;
+    border: 2px solid #fff;
+    padding: 15px 25px;
+    border-radius: 50px;
+    transition: 0.3s;
+    margin-left: 100px;
+}
+
+.content a:hover {
+    background-color: #fff;
+    color: #000;
+}
+
+.background-clip {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    max-width: 100vw;
+    align-items: center;
+    height: 100px;
+margin-left: 50px;
+margin-right: 50px;
+  
+}
+
+
+
+a:link {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+    margin-left: 20px;
+    ;
+}
+
+/* a:visited {
+    color: rgb(175, 6, 34);
+    background-color: transparent;
+    text-decoration: none;
+} */
+
+a:hover {
+    color: red;
+    background-color: transparent;
+    text-decoration: underline;
+}
+
+a:active {
+    color: yellow;
+    background-color: transparent;
+    text-decoration: underline;
+}
+ h1 {
+    margin-top: 10px;
+    margin-left: 100px;
+    margin-right: 10px;
+    align-items: center;
+    font-size: 60px;
+    font-weight: bold;
+}
+ p {
+    font-size: 20px;
+    margin-top: 10px;
+    margin-left: 80px;
+    margin-right: 20px;
+    color: white;
+}
+
+/* 
+ Hero Section 
 .hero {
     background: url('hero.jpg') no-repeat center center/cover;
     width: 
@@ -82,7 +182,7 @@ position: relative;
 .hero-text p {
     font-size: 20px;
     margin-top: 10px;
-}
+} */
 
 /* next part */
 .section {
