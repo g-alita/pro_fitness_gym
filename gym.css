@@ -100,7 +100,7 @@ h1 {
     margin-left: 100px;
     margin-right: 10px;
     align-items: center;
-    font-size: 60px;
+    font-size: 50px;
     font-weight: bold;
 }
 
@@ -445,3 +445,135 @@ button:hover {
     font-weight: bold;
     margin-top: 5px;
 }
+@media (min-aspect-ratio:16/9) {
+    .background-clip{
+        width: 100%;
+        height: auto;
+    }
+}
+
+@media (max-aspect-ratio:16/9) {
+    .background-clip{
+        width: auto;
+        height: 100%;
+    }
+}
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background-color: #111;
+        text-align: center;
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .content h1 {
+        font-size: 40px;
+        text-align: center;
+    }
+
+    .content a {
+        font-size: 16px;
+        margin: 10px auto;
+    }
+
+    .section {
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .image-placeholder {
+        width: 100%;
+        height: 250px;
+    }
+
+    .team-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card {
+        width: 90%;
+    }
+
+    h1, h3 {
+        font-size: 24px;
+        text-align: center;
+    }
+
+    p, ul {
+        margin: 0 20px;
+        text-align: center;
+    }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    nav {
+        padding: 0 40px;
+    }
+
+    .content h1 {
+        font-size: 60px;
+        text-align: center;
+    }
+
+    .content a {
+        font-size: 18px;
+        margin: 0 auto;
+    }
+
+    .section {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .card {
+        width: 40%;
+    }
+
+    .team-container {
+        justify-content: center;
+        gap: 15px;
+    }
+}
+@media (min-width: 1200px) {
+    .card {
+        width: 250px;
+    }
+
+    .content h1 {
+        font-size: 95px;
+    }
+
+    .section {
+        width: 90%;
+    }
+}
+.hamburger {
+    display: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+        position: absolute;
+        top: 30px;
+        right: 30px;
+    }
+}
+
+
+
+

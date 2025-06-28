@@ -57,3 +57,6 @@ if (slider) {
     interval = setInterval(nextTestimonial, 4000);
   });
 }
+function toggleMenu() {
+    document.querySelector('.nav-links').classList.toggle('show');
+}
