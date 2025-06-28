@@ -10,9 +10,10 @@ body {
     background-color: #111;
     color: white;
 }
-.box{
+
+.box {
     opacity: 0.79;
-        /* background-color: rgba(0, 0, 0, 0.4); */
+    /* background-color: rgba(0, 0, 0, 0.4); */
 }
 
 .main {
@@ -61,9 +62,9 @@ nav {
     max-width: 100vw;
     align-items: center;
     height: 100px;
-margin-left: 50px;
-margin-right: 50px;
-  
+    margin-left: 50px;
+    margin-right: 50px;
+
 }
 
 
@@ -93,7 +94,8 @@ a:active {
     background-color: transparent;
     text-decoration: underline;
 }
- h1 {
+
+h1 {
     margin-top: 10px;
     margin-left: 100px;
     margin-right: 10px;
@@ -101,7 +103,8 @@ a:active {
     font-size: 60px;
     font-weight: bold;
 }
- p {
+
+p {
     font-size: 20px;
     margin-top: 10px;
     margin-left: 80px;
@@ -188,13 +191,14 @@ position: relative;
 .section {
     padding: 40px;
 }
-h3{
+
+h3 {
     margin-left: 80px;
     margin-right: 20px;
 }
 
-ul{
-      margin-left: 95px;
+ul {
+    margin-left: 95px;
     margin-right: 40px;
 }
 
@@ -204,9 +208,9 @@ ul{
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center; */
-     padding: 10px;
+    padding: 10px;
     display: flex;
-    width: 70vw;
+    width: 90vw;
     justify-content: center;
     align-items: center;
     color: white;
@@ -218,14 +222,16 @@ ul{
 .section .image {
     flex: 1 1 45%;
     margin: 20px 0;
-}.separation {
+}
+
+.separation {
     height: 4px;
     background-color: gray;
 }
 
 .image-placeholder {
     background-color: #ddd;
-    height: 400px;
+    height: 350px;
     width: auto;
 }
 
@@ -444,4 +450,3 @@ button:hover {
     font-weight: bold;
     margin-top: 5px;
 }
-
