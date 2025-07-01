@@ -6,7 +6,6 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background-image: url("im1.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -38,7 +37,7 @@ body {
   gap: 30px;
   padding: 60px 20px;
   position: relative;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url(".jpg");
+  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("im1.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
