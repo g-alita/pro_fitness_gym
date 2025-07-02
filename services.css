@@ -20,7 +20,7 @@ body {
 
 .page-header h1 {
   font-size: 3rem;
-  color: #ff416c;
+  color: #2a90bd;
 }
 
 .page-header p {
@@ -87,7 +87,7 @@ body {
 .flip-card-front i {
   font-size: 3rem;
   margin-bottom: 20px;
-  color: #ff416c;
+  color: #2a90bd;
 }
 
 .flip-card-front h2 {
@@ -102,7 +102,7 @@ body {
 
 /* Back */
 .flip-card-back {
-  background-color: #ff416c;
+  background-color: #2a90bd;
   color: white;
   transform: rotateY(180deg);
   display: flex;
@@ -125,7 +125,7 @@ body {
 .card-btn {
   padding: 10px 20px;
   background: #fff;
-  color: #ff416c;
+  color:  #2a90bd;
   text-decoration: none;
   border-radius: 25px;
   font-weight: bold;
@@ -149,7 +149,7 @@ body {
 }
 
 .cta-btn {
-  background-color: #ff416c;
+  background-color: #2a90bd;
   color: white;
   padding: 12px 30px;
   border-radius: 30px;
@@ -159,7 +159,7 @@ body {
 }
 
 .cta-btn:hover {
-  background-color: #e7335e;
+  background-color: #2a90bd;
 }
 
 /* Responsive */

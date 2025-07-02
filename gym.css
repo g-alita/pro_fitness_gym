@@ -112,81 +112,6 @@ p {
     color: white;
 }
 
-/* 
- Hero Section 
-.hero {
-    background: url('hero.jpg') no-repeat center center/cover;
-    width: 
-    100%;
-    height: 125vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgb(255, 255, 255);
-position: relative;
-}
-
-
-.overlay {
-    background-color: rgba(0, 0, 0, 0.7);
-    height: 100%;
-    width: 100%;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: transparent;
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: red;
-}
-
-.nav-links {
-    list-style: none;
-    display: flex;
-}
-
-.nav-links li {
-    margin: 0 15px;
-}
-
-.nav-links a {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.hero {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-
-
-
-
-
-.hero-text h1 {
-    margin-top: 300px;
-    align-items: center;
-    font-size: 60px;
-    font-weight: bold;
-}
-
-.hero-text p {
-    font-size: 20px;
-    margin-top: 10px;
-} */
-
 /* next part */
 .section {
     padding: 40px;
@@ -445,19 +370,21 @@ button:hover {
     font-weight: bold;
     margin-top: 5px;
 }
+
 @media (min-aspect-ratio:16/9) {
-    .background-clip{
+    .background-clip {
         width: 100%;
         height: auto;
     }
 }
 
 @media (max-aspect-ratio:16/9) {
-    .background-clip{
+    .background-clip {
         width: auto;
         height: 100%;
     }
 }
+
 @media (max-width: 768px) {
     nav {
         flex-direction: column;
@@ -506,16 +433,19 @@ button:hover {
         width: 90%;
     }
 
-    h1, h3 {
+    h1,
+    h3 {
         font-size: 24px;
         text-align: center;
     }
 
-    p, ul {
+    p,
+    ul {
         margin: 0 20px;
         text-align: center;
     }
 }
+
 @media (min-width: 769px) and (max-width: 1024px) {
     nav {
         padding: 0 40px;
@@ -545,6 +475,7 @@ button:hover {
         gap: 15px;
     }
 }
+
 @media (min-width: 1200px) {
     .card {
         width: 250px;
@@ -558,6 +489,7 @@ button:hover {
         width: 90%;
     }
 }
+
 .hamburger {
     display: none;
     font-size: 24px;
@@ -573,7 +505,3 @@ button:hover {
         right: 30px;
     }
 }
-
-
-
-
