@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Poppins', Arial, sans-serif;
     background: #000;
 }
 
@@ -34,9 +34,9 @@ body {
     max-width: 480px;
     padding: 40px 32px;
     border-radius: 16px;
-    background: #000;
-    box-shadow: 0 4px 32px rgba(100, 125, 222, 0.08);
-     background-image: url('photos/im1.jpg');
+    /* background: #000; */
+    /* box-shadow: 0 4px 32px rgba(94, 98, 112, 0.08); */
+     /* background-image: url('photos/im1.jpg');  */
     background-size: cover;
     background-position: center;
     position: relative;
@@ -80,6 +80,7 @@ body {
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="tel"],
+.form-group input[type="password"] 
 .form-group input[type="password"] {
     padding: 10px 12px;
     border: 1px solid #d1d5db;
@@ -90,7 +91,7 @@ body {
 }
 
 .form-group input:focus {
-    border-color: #647dee;
+    border-color: #007bfe ;
     outline: none;
 }
 

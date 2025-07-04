@@ -28,34 +28,43 @@
                         <label for="email">Email</label>
                         <input type="email" id="email" name="email" placeholder="Email" required>
                     </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="Please enter your password" required>
-                    </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="confirm-password">Confirm password</label>
-                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Please enter your password again" required>
-                    </div>
-                    <div class="form-group gender-group">
-                        <label>Gender</label>
-                        <div class="gender-options">
-                            <label><input type="radio" name="gender" value="male" required> Male</label>
-                            <label><input type="radio" name="gender" value="female"> Female</label>
-                            <label><input type="radio" name="gender" value="other"> Other</label>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Please enter your password" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm password</label>
+                            <input type="password" id="confirm-password" name="confirm-password" placeholder="Please enter your password again" required>
                         </div>
+                </div>
+                <div class="form-group gender-group">
+                    <label>Gender</label>
+                    <div class="gender-options">
+                        <label><input type="radio" name="gender" value="male" required> Male</label>
+                        <label><input type="radio" name="gender" value="female"> Female</label>
+                        <label><input type="radio" name="gender" value="other"> Other</label>
+                    </div>
                     </div>
                 </div>
-                <div class="form-row">
+                <!-- <div class="form-row">
                     <div class="form-group">
                         <label for="age">Age</label>
                         <input type="tel" id="age" name="age" placeholder="Age" required>
-                    </div>
-                    <div class="form-group">
+                    </div> -->
+                      <div class="form-group">
+        <label for="goal">Your Fitness Goal</label>
+        <select id="goal" required>
+          <option value="">Select</option>
+          <option value="weightloss">Weight Loss</option>
+          <option value="muscle">Muscle Gain</option>
+          <option value="fitness">General Fitness</option>
+        </select>
+      <!-- </div> -->
+                    <!-- <div class="form-group">
                         <label for="address">Address</label>
                         <input type="address" id="address" name="address" placeholder="Please enter your address" required>
-                    </div>
+                    </div> -->
                 </div>
                 <button type="submit" class="register-btn">Next Step</button>
                 
