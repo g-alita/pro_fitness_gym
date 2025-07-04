@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Arial, sans-serif;
-    background: #f5f7fa;
+    background: #000;
 }
 
 .register-wrapper {
@@ -21,11 +21,12 @@ body {
 
 .register-form-container {
     flex: 1.8;
-    background: #fff;
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 0 40px rgba(0,0,0,0.08);
+   
 }
 
 .register-form {
@@ -33,15 +34,27 @@ body {
     max-width: 480px;
     padding: 40px 32px;
     border-radius: 16px;
-    background: #fff;
+    background: #000;
     box-shadow: 0 4px 32px rgba(100, 125, 222, 0.08);
+     background-image: url('photos/im1.jpg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.register-form::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1;
 }
 
 .register-form h1 {
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 24px;
-    color: #222;
+    color: #007bff;
     letter-spacing: 1px;
 }
 
@@ -60,7 +73,7 @@ body {
 .form-group label {
     font-size: 1rem;
     margin-bottom: 6px;
-    color: #333;
+    color: #007bff;
     font-weight: 500;
 }
 
@@ -96,13 +109,13 @@ body {
 .gender-options label {
     font-weight: 400;
     font-size: 0.98rem;
-    color: #444;
+    color: #007bff;
 }
 
 .register-btn {
     width: 100%;
     padding: 12px 0;
-    background: linear-gradient(90deg, #647dee 0%, #7f53ac 100%);
+    background-color: #007bff;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -114,7 +127,7 @@ body {
 }
 
 .register-btn:hover {
-    background: linear-gradient(90deg, #7f53ac 0%, #647dee 100%);
+    background-color: #007bff;
 }
 
 .login-link {
