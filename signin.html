@@ -9,7 +9,7 @@
 <body>
   <div class="container">
     <div class="logo">
-      <img src="gym-icon.png" alt="Gym Icon" />
+      <img src="photos/doumble.png" alt="Gym Icon" />
       <h1>GYM</h1>
     </div>
     <h2>SIGN IN</h2>
@@ -36,6 +36,43 @@
       const input = document.getElementById('passwordInput');
       input.type = input.type === 'password' ? 'text' : 'password';
     }
+
+  document.getElementById('signInForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('signInEmail').value;
+  const password = document.getElementById('signInPassword').value;
+  const errorDiv = document.getElementById('signInError');
+  errorDiv.textContent = '';
+
+  // Email format validation
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    errorDiv.textContent = 'Invalid email format.';
+    return;
+  }
+  if (password.length < 8) {
+    errorDiv.textContent = 'Password must be at least 8 characters.';
+    return;
+  }
+
+  // Send to backend
+  try {
+    const response = await fetch('http://localhost:5000/api/signin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await response.json();
+    if (data.error) {
+      errorDiv.textContent = data.error;
+    } else {
+      // Success: redirect or show message
+      window.location.href = '/dashboard.html';
+    }
+  } catch (err) {
+    errorDiv.textContent = 'Sign in failed!';
+  }
+});
   </script>
 </body>
 </html>

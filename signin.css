@@ -7,7 +7,13 @@
 }
 
 body {
-  background-color: #1c1c1c;
+  background-image: url(/photos/signinbarbell.png);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-color: #333
+  background-blend-mode:dark ;
+  background-origin: border-box;
   color: white;
   display: flex;
   justify-content: center;
@@ -17,12 +23,13 @@ body {
 
 .container {
   text-align: center;
-  width: 90%;
+  width: 100%;
   max-width: 360px;
+  padding: 20px;
 }
 
 .logo img {
-  width: 60px;
+  width: 200px;
   margin-bottom: 10px;
 }
 
@@ -40,9 +47,18 @@ h2 {
 .signin-form {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 15px;
 }
 
+input,
+.password-wrapper,
+button {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Input styles */
 input {
   padding: 14px;
   border-radius: 12px;
@@ -53,8 +69,15 @@ input {
   color: #333;
 }
 
+/* Password wrapper */
 .password-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
 }
 
 .password-wrapper .toggle {
@@ -67,6 +90,7 @@ input {
   color: #666;
 }
 
+/* Button */
 button {
   padding: 14px;
   border: none;
@@ -82,9 +106,11 @@ button:hover {
   background-color: #333;
 }
 
+/* Links */
 .links {
   margin-top: 15px;
   font-size: 14px;
+  text-align: center;
 }
 
 .links a {

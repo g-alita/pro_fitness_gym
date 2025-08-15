@@ -38,5 +38,34 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+const loginSchema = new mongoose.Schema({
+  email: String,
+  password: String, // In production, hash passwords!
+  createdAt: { type: Date, default: Date.now }
+});
+const Login = mongoose.model('Login', loginSchema, 'logins');
+
+app.post('/api/signin', async (req, res) => {
+  const { email, password } = req.body;
+  // Validate email format and password length
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format.' });
+  }
+  if (!password || password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+  // Check if user exists
+  const user = await Login.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ error: 'Email not registered.' });
+  }
+  // Check password (in production, use bcrypt)
+  if (user.password !== password) {
+    return res.status(400).json({ error: 'Incorrect password.' });
+  }
+  res.json({ message: 'Sign in successful!' });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
