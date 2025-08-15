@@ -8,17 +8,21 @@
 
 body {
   background-image: url(/photos/signinbarbell.png);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  background-color: #333
-  background-blend-mode:dark ;
-  background-origin: border-box;
-  color: white;
-  display: flex;
-  justify-content: center;
+  display:flex;
+  justify-content: right;
   align-items: center;
-  height: 100vh;
+  margin-right: 20%;
+  margin-top: 5%;
+  z-index: 0;
+}
+
+.blur-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 123, 255, 0.25); 
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+  z-index: 1;
 }
 
 .container {
@@ -26,6 +30,8 @@ body {
   width: 100%;
   max-width: 360px;
   padding: 20px;
+  margin-top: 55px;
+  z-index: 2;
 }
 
 .logo img {
