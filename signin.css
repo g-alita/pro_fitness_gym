@@ -21,7 +21,7 @@ body {
   inset: 0;
   background: rgba(0, 123, 255, 0.25); 
   backdrop-filter: blur(2.5px);
-  -webkit-backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px); /*here*/
   z-index: 1;
 }
 
