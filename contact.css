@@ -5,7 +5,30 @@ body {
     margin: 0;
     padding: 0;
 }
-
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+    padding: 0 20px;
+    position: fixed;      /* 👈 stick to top */
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: transparent;     /* keeps nav visible */
+    z-index: 1000;        /* makes sure nav is above everything */
+}
+/* .contact-section {
+    padding: 160px 20px 60px; 
+    text-align: center;
+} */
+a:link {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+    margin-left: 20px;
+    ;
+}
 .contact-section {
     padding: 60px 20px;
     text-align: center;
@@ -82,6 +105,38 @@ body {
     overflow: hidden;
 }
 
+/* Default (desktop) */
+.nav-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none; /* hide menu by default */
+    flex-direction: column;
+    position: absolute;
+    top: 100px; /* below navbar */
+    right: 20px;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    width: 200px;
+    z-index: 1000;
+  }
+
+  .nav-links.show {
+    display: flex; /* show when toggled */
+  }
+
+  .nav-links a {
+    margin: 10px 0;
+    display: block;
+  }
+}
+
 @media (max-width: 768px) {
     .contact-container {
         flex-direction: column;
@@ -91,5 +146,75 @@ body {
     .contact-map {
         width: 100%;
         height: 300px;
+    }
+}
+/* Tablet view */
+@media (max-width: 1024px) {
+  .contact-section h2 {
+    font-size: 2rem;
+  }
+
+  .contact-container {
+    gap: 20px;
+  }
+
+  .contact-form {
+    padding: 20px;
+  }
+}
+
+/* Mobile view */
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+        position: absolute;
+        top: 30px;
+        right: 30px;
+    }
+}
+@media (max-width: 768px) {
+  .contact-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .contact-map {
+    min-height: 300px;
+  }
+
+  .contact-section h2 {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-form form input,
+  .contact-form form textarea {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .contact-form form button {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  .contact-info p {
+    font-size: 14px;
+  }
+}
+.hamburger {
+    display: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+        position: absolute;
+        top: 30px;
+        right: 30px;
     }
 }
