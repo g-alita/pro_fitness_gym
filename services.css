@@ -1,3 +1,4 @@
+/* ========== RESET & BASE ========== */
 * {
   margin: 0;
   padding: 0;
@@ -12,9 +13,17 @@ body {
   color: #fff;
 }
 
+a:link {
+  color: white;
+  background-color: transparent;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+/* ========== HEADER ========== */
 .page-header {
   text-align: center;
-  padding: 60px 20px 20px;
+  padding: 80px 20px 20px;
   background-color: #1a1a1a;
 }
 
@@ -29,7 +38,30 @@ body {
   margin-top: 10px;
 }
 
-/* ✅ Services Section with Background */
+/* ========== NAVIGATION ========== */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100px;
+  padding: 0 20px;
+  position: fixed;   /* Stick to top */
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: transparent;
+  z-index: 1000;     /* Stay above content */
+}
+
+/* ========== HAMBURGER MENU ========== */
+.hamburger {
+  display: none;   /* Hidden by default (desktop) */
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+
+/* ========== SERVICES SECTION ========== */
 .services-section {
   display: flex;
   flex-wrap: wrap;
@@ -37,13 +69,13 @@ body {
   gap: 30px;
   padding: 60px 20px;
   position: relative;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("photos\im1.jpg");
+  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("photos/im1.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
 
-/* Flip Cards */
+/* Flip Card Container */
 .flip-card {
   background-color: transparent;
   width: 280px;
@@ -63,6 +95,7 @@ body {
   transform: rotateY(180deg);
 }
 
+/* Flip Card Faces */
 .flip-card-front,
 .flip-card-back {
   position: absolute;
@@ -75,7 +108,7 @@ body {
   text-align: center;
 }
 
-/* Front */
+/* Front Side */
 .flip-card-front {
   background-color: #1f1f1f;
   display: flex;
@@ -100,7 +133,7 @@ body {
   font-size: 0.95rem;
 }
 
-/* Back */
+/* Back Side */
 .flip-card-back {
   background-color: #2a90bd;
   color: white;
@@ -125,7 +158,7 @@ body {
 .card-btn {
   padding: 10px 20px;
   background: #fff;
-  color:  #2a90bd;
+  color: #2a90bd;
   text-decoration: none;
   border-radius: 25px;
   font-weight: bold;
@@ -136,7 +169,7 @@ body {
   background: #e2e2e2;
 }
 
-/* CTA Section */
+/* ========== CTA SECTION ========== */
 .cta-section {
   text-align: center;
   background-color: #1a1a1a;
@@ -159,16 +192,48 @@ body {
 }
 
 .cta-btn:hover {
-  background-color: #2a90bd;
+  background-color: #23749a;
 }
 
-/* Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
+  /* Header */
   .page-header h1 {
     font-size: 2rem;
   }
 
   .cta-section h2 {
     font-size: 1.5rem;
+  }
+
+  /* Hamburger visible */
+  .hamburger {
+    display: block;
+    position: absolute;
+    top: 30px;
+    right: 30px;
+  }
+
+  /* Mobile Nav */
+  .nav-links {
+    display: none; /* hidden by default */
+    flex-direction: column;
+    position: absolute;
+    top: 100px;
+    right: 20px;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    width: 200px;
+    z-index: 1000;
+  }
+
+  .nav-links.show {
+    display: flex; /* show when toggled */
+  }
+
+  .nav-links a {
+    margin: 10px 0;
+    display: block;
   }
 }
