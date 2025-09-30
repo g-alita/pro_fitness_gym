@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pro Fitness - Gallery</title>
+  <link rel="stylesheet" href="gallery.css">
+  <!-- Lightbox2 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+</head>
+<body>
+
+  <!-- ✅ Page Header -->
+  <header class="page-header">
+    <h1>Our Gym Gallery</h1>
+    <p>Take a look at our facilities and training environment</p>
+  </header>
+
+  <!-- ✅ Gallery Section -->
+  <section class="gallery-section">
+    <h2>Gym Gallery</h2>
+
+    <!-- Filter Buttons -->
+    <div class="gallery-filters">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="strength">Strength</button>
+      <button data-filter="cardio">Cardio</button>
+      <button data-filter="yoga">Yoga</button>
+    </div>
+
+    <!-- Masonry Gallery -->
+    <div class="gallery-masonry">
+      
+      
+      <a href="photos/g2.jpg" data-lightbox="gym-gallery" data-title="Cardio Zone" data-category="cardio">
+        <img src="photos/nitih.png" alt="Gym photo 2">
+      </a>
+      <a href="photos/g3.jpg" data-lightbox="gym-gallery" data-title="Yoga & Flexibility Class" data-category="yoga">
+        <img src="akash.png" alt="Gym photo 3">
+      </a>
+      <a href="photos/g4.jpg" data-lightbox="gym-gallery" data-title="Strength Training Section" data-category="strength">
+        <img src="photos/g4.jpg" alt="Gym photo 4">
+      </a>
+      <a href="photos/g5.jpg" data-lightbox="gym-gallery" data-title="Crossfit Area" data-category="cardio">
+        <img src="photos/g5.jpg" alt="Gym photo 5">
+      </a>
+      <a href="photos/g6.jpg" data-lightbox="gym-gallery" data-title="Personal Training Session" data-category="strength">
+        <img src="photos/g6.jpg" alt="Gym photo 6">
+      </a>
+    </div>
+  </section>
+
+  <!-- ✅ Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  <script src="gallery.js"></script>
+</body>
+</html>
