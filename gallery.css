@@ -1,0 +1,107 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #111;
+  color: #fff;
+  line-height: 1.6;
+}
+
+/* ✅ Page Header */
+.page-header {
+  text-align: center;
+  padding: 80px 20px 40px;
+  background-color: #1a1a1a;
+}
+
+.page-header h1 {
+  font-size: 3rem;
+  color: #2a90bd;
+}
+
+.page-header p {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-top: 10px;
+}
+
+/* ✅ Gallery Section */
+.gallery-section {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.gallery-section h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #2a90bd;
+}
+
+/* Filter Buttons */
+.gallery-filters {
+  margin-bottom: 25px;
+}
+
+.gallery-filters button {
+  background: #222;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  margin: 5px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.gallery-filters button:hover,
+.gallery-filters button.active {
+  background: #2a90bd;
+}
+
+/* Masonry Grid */
+.gallery-masonry {
+  column-count: 3;
+  column-gap: 15px;
+}
+
+.gallery-masonry a {
+  display: inline-block;
+  margin-bottom: 15px;
+  width: 100%;
+  transition: opacity 0.3s ease;
+}
+
+.gallery-masonry img {
+  width: 100%;
+  border-radius: 10px;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.gallery-masonry img:hover {
+  transform: scale(1.05);
+}
+.gallery-masonry a {
+  display: inline-block;
+  margin-bottom: 15px;
+  width: 100%;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+/* Responsive */
+@media (max-width: 992px) {
+  .gallery-masonry {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .gallery-masonry {
+    column-count: 1;
+  }
+}
