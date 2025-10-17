@@ -8,7 +8,7 @@
 body {
     font-family: 'Poppins';
     background-color: #111;
-    color: white;
+    color: #f2f2f2cb;
 }
 
 .main {
@@ -25,7 +25,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     font-size: 95px;
-    color: #fff;
+    color: #f2f2f2cb;
     margin-bottom: 50px;
 }
 
@@ -78,27 +78,22 @@ nav {
 
 
 a:link {
-    color: white;
+    color: #f2f2f2cb;
     background-color: transparent;
     text-decoration: none;
     margin-left: 20px;
     ;
 }
 
-/* a:visited {
-    color: rgb(175, 6, 34);
+a:visited,
+a.active {
+    color: #f2f2f2cb;
     background-color: transparent;
     text-decoration: none;
-} */
-
-a:hover {
-    color: red;
-    background-color: transparent;
-    text-decoration: underline;
 }
 
-a:active {
-    color: yellow;
+a:hover {
+    color: #35bdf2;
     background-color: transparent;
     text-decoration: underline;
 }
@@ -117,7 +112,11 @@ p {
     margin-top: 10px;
     margin-left: 80px;
     margin-right: 20px;
-    color: white;
+    color: #f2f2f2cb;
+}
+
+li {
+    color: #f2f2f2cb;
 }
 
 /* next part */
@@ -128,6 +127,7 @@ p {
 h3 {
     margin-left: 80px;
     margin-right: 20px;
+    color: #35bdf2;
 }
 
 ul {
@@ -147,6 +147,21 @@ ul {
     position: relative;
 }
 
+.slideshow img {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: opacity 1s ease-in-out;
+}
+
+@media (max-width: 768px) {
+    .slideshow img {
+        height: 250px;
+    }
+}
+
 .section .text,
 .section .image {
     flex: 1 1 45%;
@@ -159,9 +174,9 @@ ul {
 }
 
 .image-placeholder {
-    background-color: #ddd;
+    /* background-color: #ddd; */
     height: 350px;
-    width: auto;
+    width: 100%;
     min-width: 200px;
     min-height: 200px;
     display: block;
@@ -195,7 +210,7 @@ body {
 }
 
 .team-section h1 {
-    color: white;
+    color: #35bdf2;
     font-size: 2.5rem;
     margin-bottom: 40px;
 }
@@ -388,6 +403,11 @@ button:hover {
     margin-top: 5px;
 }
 
+h4 {
+    color: #35bdf2;
+    margin-top: 5px;
+}
+
 @media (min-aspect-ratio:16/9) {
     .background-clip {
         width: 100%;
@@ -413,7 +433,7 @@ button:hover {
         display: none;
         flex-direction: column;
         width: 100%;
-        background-color: #111;
+        background-color: transparent;
         text-align: center;
     }
 
