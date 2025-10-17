@@ -12,13 +12,13 @@ body {
 }
 
 .main {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .content h1 {
@@ -46,16 +46,16 @@ body {
 }
 
 .background-clip {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  min-width: 100%;
-  min-height: 100%;
-  object-fit: cover;
-  transform: translate(-50%, -50%);
-  z-index: -1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+    min-height: 100%;
+    object-fit: cover;
+    transform: translate(-50%, -50%);
+    z-index: -1;
 }
 
 nav {
@@ -64,12 +64,15 @@ nav {
     align-items: center;
     height: 100px;
     padding: 0 20px;
-    position: fixed;      /* 👈 stick to top */
+    position: fixed;
+    /* 👈 stick to top */
     top: 0;
     left: 0;
     width: 100%;
-    background: transparent;     /* keeps nav visible */
-    z-index: 1000;        /* makes sure nav is above everything */
+    background: transparent;
+    /* keeps nav visible */
+    z-index: 1000;
+    /* makes sure nav is above everything */
 }
 
 
@@ -159,6 +162,9 @@ ul {
     background-color: #ddd;
     height: 350px;
     width: auto;
+    min-width: 200px;
+    min-height: 200px;
+    display: block;
 }
 
 .cta {
@@ -272,11 +278,13 @@ button {
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s;
 }
+
 .card i {
-  font-size: 5rem;
-  margin-bottom: 20px;
-  color: #2a90bd;
+    font-size: 5rem;
+    margin-bottom: 20px;
+    color: #2a90bd;
 }
+
 .card:hover {
     transform: translateY(-10px);
 }
@@ -516,15 +524,15 @@ button:hover {
 }
 
 @media (max-width: 768px) {
-  .background-clip {
-    width: 100vw;
-    height: 100vh;
-    transform: translate(-50%, -50%);
-    object-fit: cover;
-  }
+    .background-clip {
+        width: 100vw;
+        height: 100vh;
+        transform: translate(-50%, -50%);
+        object-fit: cover;
+    }
 
-  .main {
-    height: 100vh;
-    overflow: hidden;
-  }
+    .main {
+        height: 100vh;
+        overflow: hidden;
+    }
 }
