@@ -393,12 +393,12 @@ button {
 
 .card h3 {
     margin: 10px 0;
-    color: #231773;
+    color:rgba(0, 0%, 0%, 0.6);
 }
 
 .card h2 {
     margin: 10px 0;
-    color: #231773;
+    color: #35bdf2;
 }
 
 .card ul {
@@ -409,12 +409,12 @@ button {
 
 .card ul li {
     margin: 5px 0;
-    color: #2a1b6b;
+    color: #fafafa;
 }
 
 button {
     align-self: center;
-    background-color: #231773;
+    background-color: #2a90bd;
     color: white;
     border: #003b8e;
     padding: 12px 25px;
