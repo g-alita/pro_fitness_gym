@@ -23,11 +23,24 @@ nav {
     text-align: center;
 } */
 a:link {
-    color: white;
+    color: #f2f2f2cb;
     background-color: transparent;
     text-decoration: none;
     margin-left: 20px;
     ;
+}
+
+a:visited,
+a.active {
+    color: #f2f2f2cb;
+    background-color: transparent;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #35bdf2;
+    background-color: transparent;
+    text-decoration: underline;
 }
 .contact-section {
     padding: 60px 20px;

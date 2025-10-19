@@ -7,8 +7,9 @@
 
 body {
     font-family: 'Poppins';
-    background-color: #111;
-    color: #f2f2f2cb;
+background-color: • rgba(226, 226, 227,0.695);
+    color: black;
+  backdrop-filter: blur(5px);
 }
 
 .main {
@@ -25,7 +26,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     font-size: 95px;
-    color: #f2f2f2cb;
+    color: white;
     margin-bottom: 50px;
 }
 
@@ -42,7 +43,7 @@ body {
 
 .content a:hover {
     background-color: #fff;
-    color: #000;
+    color: black;
 }
 
 .background-clip {
@@ -65,29 +66,26 @@ nav {
     height: 100px;
     padding: 0 20px;
     position: fixed;
-    /* 👈 stick to top */
     top: 0;
     left: 0;
     width: 100%;
     background: transparent;
-    /* keeps nav visible */
     z-index: 1000;
-    /* makes sure nav is above everything */
 }
 
 
 
-a:link {
-    color: #f2f2f2cb;
+nav a:link {
+    color: #35bdf2;
     background-color: transparent;
     text-decoration: none;
     margin-left: 20px;
     ;
 }
 
-a:visited,
+nav a:visited,
 a.active {
-    color: #f2f2f2cb;
+    color: #35bdf2;
     background-color: transparent;
     text-decoration: none;
 }
@@ -112,11 +110,11 @@ p {
     margin-top: 10px;
     margin-left: 80px;
     margin-right: 20px;
-    color: #f2f2f2cb;
+    color: black;
 }
 
 li {
-    color: #f2f2f2cb;
+    color: black;
 }
 
 /* next part */
@@ -142,7 +140,7 @@ ul {
     width: 90vw;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: black;
     margin: auto;
     position: relative;
 }
@@ -173,9 +171,90 @@ ul {
     background-color: gray;
 }
 
+/* ==== TEAM SECTION ==== */
+.team {
+    /* background-color: rgba(227, 226, 226, 0.695); */
+    color: #fff;
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    margin-bottom: 50px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #35bdf2;
+}
+
+.team-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+}
+
+.team-member {
+    /* background: #35bdf2; */
+    border-radius: 20px;
+    /* padding: 30px 20px; */
+    width: 250px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-member:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 0 20px #35bdf2;
+}
+
+.member-img {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #35bdf2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.member-img img {
+    width: 180px;
+    height: 190px;
+    object-fit: cover;
+    display: block;
+}
+
+.team-member h3 {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    color: #35bdf2;
+    margin-left: 20px;
+}
+
+.team-member p {
+    color: #bbb;
+    font-size: 0.95rem;
+    margin-left: 25px;
+}
+
+/* ==== RESPONSIVE ==== */
+@media (max-width: 768px) {
+    .team-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .team-member {
+        width: 80%;
+        max-width: 300px;
+    }
+}
 .image-placeholder {
     /* background-color: #ddd; */
-    height: 350px;
+    height: 400px;
     width: 100%;
     min-width: 200px;
     min-height: 200px;
@@ -251,12 +330,12 @@ body {
 
 .team-member p {
     font-size: 0.9rem;
-    color: white;
+    color: black;
     margin-bottom: 10px;
 }
 
 .team-member h4 {
-    color: white;
+    color: black;
     margin-bottom: 15px;
 }
 
@@ -285,13 +364,14 @@ button {
 }
 
 .card {
-    background: linear-gradient(#ffffff, #339db5);
+    background: linear-gradient(#ffffff, #35bdf2);
     border-radius: 20px;
     padding: 20px;
     text-align: center;
     width: 250px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s;
+    /* transition: box-shadow 0.3s; */
 }
 
 .card i {
@@ -313,12 +393,12 @@ button {
 
 .card h3 {
     margin: 10px 0;
-    color: #004b79;
+    color: #231773;
 }
 
 .card h2 {
     margin: 10px 0;
-    color: #00324d;
+    color: #231773;
 }
 
 .card ul {
@@ -334,7 +414,7 @@ button {
 
 button {
     align-self: center;
-    background-color: #00bfa5;
+    background-color: #231773;
     color: white;
     border: #003b8e;
     padding: 12px 25px;
@@ -346,7 +426,8 @@ button {
 }
 
 button:hover {
-    background-color: #003b8e;
+    background-color: white;
+    color: #231773;
 }
 
 
@@ -406,6 +487,12 @@ button:hover {
 h4 {
     color: #35bdf2;
     margin-top: 5px;
+}
+footer a {
+    color: black;
+    text-decoration: none;
+    text-align: center;
+    align-items: left;
 }
 
 @media (min-aspect-ratio:16/9) {
@@ -530,7 +617,7 @@ h4 {
 .hamburger {
     display: none;
     font-size: 24px;
-    color: white;
+    color: black;
     cursor: pointer;
 }
 

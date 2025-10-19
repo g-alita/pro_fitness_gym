@@ -12,12 +12,25 @@ body {
   background-position: center;
   color: #fff;
 }
-
 a:link {
-  color: white;
-  background-color: transparent;
-  text-decoration: none;
-  margin-left: 20px;
+    color: #f2f2f2cb;
+    background-color: transparent;
+    text-decoration: none;
+    margin-left: 20px;
+    ;
+}
+
+a:visited,
+a.active {
+    color: #f2f2f2cb;
+    background-color: transparent;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #35bdf2;
+    background-color: transparent;
+    text-decoration: underline;
 }
 
 /* ========== HEADER ========== */

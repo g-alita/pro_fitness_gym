@@ -30,7 +30,7 @@ const slideshows = {
   training: [
     "photos/training1.jpg",
     "photos/training2.jpg",
-    "photos/training3.jpg"
+    // "photos/training3.jpg"
   ],
   clean: [
     "photos/clean1.jpg",
@@ -50,7 +50,7 @@ function startSlideshow(id, images, interval = 4000) {
     setTimeout(() => {
       img.src = images[index];
       img.style.opacity = 1; // fade in
-    }, 1000);
+    }, 250);
   }, interval);
 }
 
