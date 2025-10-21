@@ -1,4 +1,16 @@
-                                                
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Fitness Gym</title>
+    <link rel="stylesheet" href="gym.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Register - Pro Fitness Gym</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
 <body>
     <!-- hero -->
     <header>
@@ -23,8 +35,8 @@
                 <source src="photos/hero.mp4" type="video/mp4">
             </video>
             <div class="content">
-                <h1>Transform your Fitness Journey at Pro Fitness</h1>
-                <p><a href="register.html">JOIN NOW</a></p>    
+                <h1>Start your Fitness Journey at Pro Fitness</h1>
+                <p><a href="register.html">JOIN NOW</a></p>
             </div>
         </div>
     </header>
@@ -190,9 +202,44 @@
             <h2>₹ 9000</h2>
             <button>Get Started</button>
         </div>
+
+        <div class="more-wrapper">
+      <div id="moreBtn" class="more-card" role="button" aria-pressed="false">More →</div>
+
+      <!-- Hidden Platinum Card -->
+      <div id="platinumCard" class="platinum-card" aria-hidden="true">
+        <div style="display:flex; flex-direction:column; ">
+          <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">Platinum</h3>
+          <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 12000</p>
+          <button>Get Started</button>
+        </div>
+      </div>
     </div>
+    
+<script>
+    // Get references
+    const moreBtn = document.getElementById('moreBtn');
+    const platinumCard = document.getElementById('platinumCard');
 
+    // Make sure platinum is hidden on load
+    platinumCard.style.display = 'none';
 
+    moreBtn.addEventListener('click', () => {
+      // Replace the More element with the platinum card in the same parent (.more-wrapper)
+      const parent = moreBtn.parentElement;
+
+      // Remove more button from DOM
+      moreBtn.remove();
+
+      // Show and insert platinum in same wrapper (centered)
+      platinumCard.style.display = 'flex';
+      platinumCard.classList.add('show');
+      platinumCard.setAttribute('aria-hidden', 'false');
+      parent.appendChild(platinumCard);
+
+      // Optional: if you want to revert back later, you can create a "Close" or "Back" behavior.
+    });
+  </script>
 
     <div class="cta" style="text-align: center;">
         <div class="logo">
