@@ -13,13 +13,22 @@ body {
   color: #fff;
 }
 a:link {
-    color: #f2f2f2cb;
+    /* color: #35bdf2; */
     background-color: transparent;
     text-decoration: none;
     margin-left: 20px;
-    ;
+    /* border-radius: 2px; */
 }
-
+nav a:link {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+}
+nav a:hover {
+    color: #5c5c5c;
+    background-color: transparent;
+    text-decoration: underline;
+}
 a:visited,
 a.active {
     color: #f2f2f2cb;
@@ -28,7 +37,7 @@ a.active {
 }
 
 a:hover {
-    color: #35bdf2;
+    color: #ffffff;
     background-color: transparent;
     text-decoration: underline;
 }
@@ -37,17 +46,17 @@ a:hover {
 .page-header {
   text-align: center;
   padding: 80px 20px 20px;
-  background-color: #1a1a1a;
+  background-color: #35bdf2;
 }
 
 .page-header h1 {
   font-size: 3rem;
-  color: #2a90bd;
+  color: white;
 }
 
 .page-header p {
   font-size: 1.2rem;
-  color: #ccc;
+  color: #5c5c5c;
   margin-top: 10px;
 }
 
@@ -82,7 +91,7 @@ nav {
   gap: 30px;
   padding: 60px 20px;
   position: relative;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url("photos/im1.jpg");
+background-color: • rgba(226, 226, 227,0.695);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -119,11 +128,11 @@ nav {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
   padding: 30px 20px;
   text-align: center;
+  color: #35bdf2;
 }
 
 /* Front Side */
 .flip-card-front {
-  background-color: #1f1f1f;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -133,7 +142,6 @@ nav {
 .flip-card-front i {
   font-size: 3rem;
   margin-bottom: 20px;
-  color: #2a90bd;
 }
 
 .flip-card-front h2 {
@@ -142,13 +150,13 @@ nav {
 }
 
 .flip-card-front p {
-  color: #aaa;
+    color: #5c5c5c;
   font-size: 0.95rem;
 }
 
 /* Back Side */
 .flip-card-back {
-  background-color: #2a90bd;
+  background-color: #35bdf2;
   color: white;
   transform: rotateY(180deg);
   display: flex;
@@ -171,7 +179,7 @@ nav {
 .card-btn {
   padding: 10px 20px;
   background: #fff;
-  color: #2a90bd;
+  color: white;
   text-decoration: none;
   border-radius: 25px;
   font-weight: bold;
@@ -180,13 +188,16 @@ nav {
 
 .card-btn:hover {
   background: #e2e2e2;
+  color: #35bdf2;
 }
 
 /* ========== CTA SECTION ========== */
 .cta-section {
   text-align: center;
-  background-color: #1a1a1a;
+  background-color: • rgba(226, 226, 227,0.695);
+  /* background-color: #1a1a1a; */
   padding: 50px 20px;
+  color: #35bdf2;
 }
 
 .cta-section h2 {
@@ -195,8 +206,7 @@ nav {
 }
 
 .cta-btn {
-  background-color: #2a90bd;
-  color: white;
+  color: #35bdf2;
   padding: 12px 30px;
   border-radius: 30px;
   text-decoration: none;
@@ -205,7 +215,8 @@ nav {
 }
 
 .cta-btn:hover {
-  background-color: #23749a;
+  background-color: #35bdf2;
+  color: white;
 }
 
 /* ========== RESPONSIVE ========== */
