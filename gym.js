@@ -79,12 +79,12 @@ function nextTestimonial() {
 setInterval(nextTestimonial, 4000);
 
 // Join button alert
-const joinButton = document.querySelector('button');
-if (joinButton) {
-  joinButton.addEventListener('click', () => {
-    alert('Thank you for your interest! Our team will contact you soon.');
-  });
-}
+// const joinButton = document.querySelector('button');
+// if (joinButton) {
+//   joinButton.addEventListener('click', () => {
+//     alert('Thank you for your interest! Our team will contact you soon.');
+//   });
+// }
 
 
 
