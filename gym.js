@@ -1,26 +1,4 @@
-// gym.js
-
-// Smooth scroll when clicking nav links
-document.querySelectorAll('.nav-links a').forEach(link => {
-  link.addEventListener('click', function (e) {
-    const href = this.getAttribute('href');
-    // Only prevent default for same-page navigation
-    if (href.startsWith('#')) {
-      e.preventDefault();
-      const targetId = href.substring(1);
-      const target = document.getElementById(targetId);
-      if (target) {
-        window.scrollTo({
-          top: target.offsetTop - 50,
-          behavior: 'smooth'
-        });
-      }
-    }
-  });
-});
-
-
-// Slideshow functionality
+// ===== Slideshow functionality =====
 const slideshows = {
   machines: [
     "photos/machines1.jpg",
@@ -29,8 +7,7 @@ const slideshows = {
   ],
   training: [
     "photos/training1.jpg",
-    "photos/training2.jpg",
-    // "photos/training3.jpg"
+    "photos/training2.jpg"
   ],
   clean: [
     "photos/clean1.jpg",
@@ -59,8 +36,7 @@ for (const [id, images] of Object.entries(slideshows)) {
   startSlideshow(id, images);
 }
 
-
-// Testimonial Slider
+// ===== Testimonial Slider =====
 let testimonials = document.querySelectorAll('.testimonial');
 let currentTestimonial = 0;
 
@@ -78,16 +54,6 @@ function nextTestimonial() {
 // Auto-slide every 4 seconds
 setInterval(nextTestimonial, 4000);
 
-// Join button alert
-// const joinButton = document.querySelector('button');
-// if (joinButton) {
-//   joinButton.addEventListener('click', () => {
-//     alert('Thank you for your interest! Our team will contact you soon.');
-//   });
-// }
-
-
-
 // Pause testimonial slider on hover
 const slider = document.querySelector('.testimonial-slider');
 let interval = setInterval(nextTestimonial, 4000);
@@ -97,7 +63,4 @@ if (slider) {
   slider.addEventListener('mouseleave', () => {
     interval = setInterval(nextTestimonial, 4000);
   });
-}
-function toggleMenu() {
-    document.querySelector('.nav-links').classList.toggle('show');
 }

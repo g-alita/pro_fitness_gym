@@ -20,7 +20,15 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     }
   });
 });
-
+// Shrink navbar when scrolling
+window.addEventListener("scroll", () => {
+  const navbar = document.querySelector("nav");
+  if (window.scrollY > 50) {
+    navbar.classList.add("scrolled");
+  } else {
+    navbar.classList.remove("scrolled");
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const images = document.querySelectorAll('.gallery img');
