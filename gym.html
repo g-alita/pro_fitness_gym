@@ -161,6 +161,7 @@
     <!-- services -->
     <div class="team-section" id="services">
         <h1>Our Services</h1>
+        <h4 style="color:#444; margin-left: 70px;text-align: center; font-size: 20px;">Gold membership</h4>
     </div>
     <div class="pricing-container">
         <div class="card">
@@ -210,42 +211,71 @@
 
         <div class="more-wrapper">
         <div id="moreBtn" class="more-card" role="button" aria-pressed="false">More →</div>
+        <h2 id="platinumHeading" class="platinum-Heading" aria-hidden="true">Platinum Membership</h2>
 
       <!-- Hidden Platinum Card -->
-      <div id="platinumCard" class="platinum-card" aria-hidden="true">
-        <div style="display:flex; flex-direction:column; ">
-          <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">Platinum</h3>
-          <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 12000</p>
+      <div class="platinum-Card"  aria-hidden="true" >
+        <div style="display:flex; flex-direction: column; ">
+          <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">Yearly</h3>
+          <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 45000</p>
           <a href="register.html">
           <button>Get Started</button></a>
         </div>
+       </div>
+
+       <div class="platinum-Card"  aria-hidden="true" >
+        <div style="display:flex;flex-direction: column; ">
+          <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">6 Month</h3>
+          <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 26000</p>
+          <a href="register.html">
+          <button>Get Started</button></a>
+        </div>
+       </div>
+
+       <div class="platinum-Card"  aria-hidden="true" >
+        <div style="display:flex; flex-direction: column; ">
+          <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">3 Month</h3>
+          <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 14500</p>
+          <a href="register.html">
+          <button>Get Started</button></a>
+        </div>
+       </div>
+
+       <div class="platinum-Card"  aria-hidden="true" >
+        <div style="display:flex; flex-direction: column; ">
+          <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">Monthly</h3>
+          <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 5200</p>
+          <a href="register.html">
+          <button>Get Started</button></a>
+        </div>
+        </div>
       </div>
     </div>
-    
-<script>
-    // Get references
-    const moreBtn = document.getElementById('moreBtn');
-    const platinumCard = document.getElementById('platinumCard');
+<script>    
+const moreBtn = document.getElementById('moreBtn');
+const platinumHeading = document.getElementById('platinumHeading');
+const cards = document.querySelectorAll(".platinum-Card");
 
-    // Make sure platinum is hidden on load
-    platinumCard.style.display = 'none';
+// Initially hide cards
+cards.forEach(card => card.style.display = "none");
 
-    moreBtn.addEventListener('click', () => {
-      // Replace the More element with the platinum card in the same parent (.more-wrapper)
-      const parent = moreBtn.parentElement;
+moreBtn.addEventListener('click', () => {
+  // Hide the More button
+  moreBtn.style.display = 'none';
 
-      // Remove more button from DOM
-      moreBtn.remove();
+  // Show the heading
+  platinumHeading.style.display = 'block';
+  platinumHeading.setAttribute('aria-hidden', 'false');
 
-      // Show and insert platinum in same wrapper (centered)
-      platinumCard.style.display = 'flex';
-      platinumCard.classList.add('show');
-      platinumCard.setAttribute('aria-hidden', 'false');
-      parent.appendChild(platinumCard);
+  // Show all platinum cards
+  cards.forEach(card => {
+    card.style.display = 'flex'; // use flex to match your design
+    card.setAttribute('aria-hidden', 'false');
+  });
+});
+</script>
 
-      // Optional: if you want to revert back later, you can create a "Close" or "Back" behavior.
-    });
-  </script>
+
 
     <div class="cta" style="text-align: center;">
         <div class="logo">
