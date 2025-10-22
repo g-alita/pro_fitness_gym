@@ -61,6 +61,42 @@
         </div>
     </section>
       <script src="contact.js"></script>
+
+      <script>
+const form = document.getElementById('contactForm');
+const statusMessage = document.getElementById('statusMessage');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const message = document.getElementById('message').value.trim();
+
+  try {
+    const response = await fetch('http://localhost:5000/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, message }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      statusMessage.style.color = 'lightgreen';
+      statusMessage.textContent = data.message;
+      form.reset();
+    } else {
+      statusMessage.style.color = 'red';
+      statusMessage.textContent = data.error || 'Something went wrong!';
+    }
+  } catch (err) {
+    statusMessage.style.color = 'red';
+    statusMessage.textContent = 'Server connection failed!';
+    console.error(err);
+  }
+});
+</script>
 </body>
 
 </html>
