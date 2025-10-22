@@ -55,8 +55,15 @@
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Chat Header */
@@ -100,12 +107,24 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.message.bot { justify-content: flex-start; }
-.message.user { justify-content: flex-end; }
+.message.bot {
+    justify-content: flex-start;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
 
 .message-content {
     max-width: 75%;
@@ -119,7 +138,7 @@
     background: white;
     color: #333;
     border-bottom-left-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .message.user .message-content {
@@ -204,9 +223,18 @@
 }
 
 /* Scrollbar */
-.chat-messages::-webkit-scrollbar { width: 6px; }
-.chat-messages::-webkit-scrollbar-track { background: #f1f1f1; }
-.chat-messages::-webkit-scrollbar-thumb { background: #35bdf2; border-radius: 10px; }
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #35bdf2;
+    border-radius: 10px;
+}
 
 .chat-button,
 .chat-container {
@@ -216,8 +244,18 @@
     will-change: transform;
     z-index: 9999 !important;
 }
+
 /* Mobile Responsive */
 @media (max-width: 480px) {
-    .chat-container { width: calc(100vw - 20px); right: 10px; bottom: 90px; height: 500px; }
-    .chat-button { right: 20px; bottom: 20px; }
+    .chat-container {
+        width: calc(100vw - 20px);
+        right: 10px;
+        bottom: 90px;
+        height: 500px;
+    }
+
+    .chat-button {
+        right: 20px;
+        bottom: 20px;
+    }
 }
