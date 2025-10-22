@@ -3,55 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Fitness - Gallery</title>
+  <title>Gallery | Pro Fitness Gym</title>
   <link rel="stylesheet" href="gallery.css">
-  <!-- Lightbox2 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
 </head>
 <body>
 
-  <!-- ✅ Page Header -->
-  <header class="page-header">
-    <h1>Our Gym Gallery</h1>
-    <p>Take a look at our facilities and training environment</p>
-  </header>
-
-  <!-- ✅ Gallery Section -->
   <section class="gallery-section">
-    <h2>Gym Gallery</h2>
+    <h1 class="heading">Our Gym Gallery</h1>
+    <p class="sub-heading">Moments of sweat, strength, and success 💪</p>
 
-    <!-- Filter Buttons -->
-    <div class="gallery-filters">
-      <button data-filter="all" class="active">All</button>
-      <button data-filter="strength">Strength</button>
-      <button data-filter="cardio">Cardio</button>
-      <button data-filter="yoga">Yoga</button>
-    </div>
-
-    <!-- Masonry Gallery -->
-    <div class="gallery-masonry">
-      
-      
-      <a href="photos/g2.jpg" data-lightbox="gym-gallery" data-title="Cardio Zone" data-category="cardio">
-        <img src="photos/nitih.png" alt="Gym photo 2">
-      </a>
-      <a href="photos/g3.jpg" data-lightbox="gym-gallery" data-title="Yoga & Flexibility Class" data-category="yoga">
-        <img src="akash.png" alt="Gym photo 3">
-      </a>
-      <a href="photos/g4.jpg" data-lightbox="gym-gallery" data-title="Strength Training Section" data-category="strength">
-        <img src="photos/g4.jpg" alt="Gym photo 4">
-      </a>
-      <a href="photos/g5.jpg" data-lightbox="gym-gallery" data-title="Crossfit Area" data-category="cardio">
-        <img src="photos/g5.jpg" alt="Gym photo 5">
-      </a>
-      <a href="photos/g6.jpg" data-lightbox="gym-gallery" data-title="Personal Training Session" data-category="strength">
-        <img src="photos/g6.jpg" alt="Gym photo 6">
-      </a>
+    <div class="gallery">
+      <img src="gallery/gym40.jpeg" alt="Workout Area">
+      <img src="gallery/gym39.jpeg" alt="Cardio Zone">
+      <img src="gallery/gym38.jpeg" alt="Zumba Session">
+      <img src="gallery/gym37.jpeg" alt="Weight Training">
+      <img src="gallery/gym36.jpeg" alt="Personal Training">
+      <img src="gallery/gym35.jpeg" alt="Crossfit">
+      <img src="gallery/gym34.jpeg" alt="Fitness Class">
+      <img src="gallery/gym32.jpeg" alt="Members at Workout">
+      <img src="gallery/gym30.jpeg" alt="Yoga Area">
+      <img src="gallery/gym26.jpeg" alt="Workout Area">
+      <img src="gallery/gym21.jpeg" alt="Cardio Zone">
+      <img src="gallery/gym18.jpeg" alt="Zumba Session">
+      <img src="gallery/gym17.jpeg" alt="Weight Training">
+      <img src="gallery/gym16.jpeg" alt="Personal Training">
+      <img src="gallery/gym15.jpeg" alt="Crossfit">
+      <img src="gallery/gym11.jpeg" alt="Fitness Class">
+      <img src="gallery/gym10.jpeg" alt="Members at Workout">
+      <img src="gallery/gym5.jpeg" alt="Yoga Area">
     </div>
   </section>
 
-  <!-- ✅ Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  <!-- Lightbox -->
+  <div class="lightbox">
+    <span class="close">&times;</span>
+    <img class="lightbox-img" src="" alt="Expanded Photo">
+    <span class="caption"></span>
+  </div>
+
   <script src="gallery.js"></script>
 </body>
 </html>
