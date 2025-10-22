@@ -160,104 +160,89 @@
         </div>
     </section>
 
-    <!-- services -->
-    <div class="team-section" id="services">
-        <h1>Our Services</h1>
-        <h4 style="color:#444; margin-left: 70px;text-align: center; font-size: 20px;">Gold membership</h4>
-    </div>
-    <div class="pricing-container">
-        <div class="card">
-            <h3>Daily Pass</h3>
-            <h2>₹ 100</h2>
-            <a href="register.html">
-                <button>Get Started</button></a>
-        </div>
+    <!-- ===== SERVICES SECTION ===== -->
+<div class="team-section" id="services">
+  <h1>Our Services</h1>
+  <!-- <h4 style="color:#444; text-align:center; font-size:20px;">Gold Membership</h4> -->
+</div>
 
-        <div class="card">
-            <h3>Monthly</h3>
-            <h2>₹ 1800</h2>
-            <a href="register.html">
-                <button>Get Started</button></a>
-        </div>
+<!-- GOLD MEMBERSHIPS -->
+<div class="pricing-container">
+  <div class="card">
+    <h3>Daily Pass</h3>
+    <h2>₹ 100</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
 
-        <div class="card">
-            <h3>3 months</h3>
-            <h2>₹ 3500</h2>
-            <a href="register.html">
-                <button>Get Started</button></a>
-        </div>
+  <div class="card">
+    <h3>Monthly</h3>
+    <h2>₹ 1800</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
 
-        <div class="card">
-            <h3>6 months</h3>
-            <h2>₹ 6500</h2>
-            <a href="register.html">
-                <button>Get Started</button></a>
-        </div>
+  <div class="card">
+    <h3>3 Months</h3>
+    <h2>₹ 3500</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
 
-        <div class="card">
-            <h3>Annual</h3>
-            <h2>₹ 9000</h2>
-            <a href="register.html">
-                <button>Get Started</button></a>
-        </div>
+  <div class="card">
+    <h3>6 Months</h3>
+    <h2>₹ 6500</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
 
-        <div class="more-wrapper">
-            <div id="moreBtn" class="more-card" role="button" aria-pressed="false">More →</div>
-            <h2 id="platinumHeading" class="platinum-Heading" aria-hidden="true">Platinum Membership</h2>
+  <div class="card">
+    <h3>Annual</h3>
+    <h2>₹ 9000</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
+</div>
 
-            <!-- Hidden Platinum Card -->
+<!-- MORE BUTTON -->
+<div class="more-wrapper">
+  <div id="moreBtn" class="more-card" role="button">More →</div>
+</div>
 
-            <div class="platinum-Card" aria-hidden="true">
-                <div style="display:flex;flex-direction: column; ">
-                    <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">6 Month</h3>
-                    <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 26000</p>
-                    <a href="register.html">
-                        <button>Get Started</button></a>
-                </div>
-            </div>
+<!-- PLATINUM MEMBERSHIPS -->
+<h2 id="platinumHeading" class="platinum-Heading" style="display:none;">Platinum Membership</h2>
 
-            <div class="platinum-Card" aria-hidden="true">
-                <div style="display:flex; flex-direction: column; ">
-                    <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">3 Month</h3>
-                    <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 14500</p>
-                    <a href="register.html">
-                        <button>Get Started</button></a>
-                </div>
-            </div>
+<div class="pricing-container platinum-container" style="display:none;">
+  <div class="platinum-Card">
+    <h3>Monthly</h3>
+    <h2>₹ 5200</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
 
-            <div class="platinum-Card" aria-hidden="true">
-                <div style="display:flex; flex-direction: column; ">
-                    <h3 style="color:#35bdf2; margin-bottom:10px; margin-left: 70px;">Monthly</h3>
-                    <p style="color: #35bdf2; font-weight:800; margin-bottom:14px;margin-left: 15px;">₹ 5200</p>
-                    <a href="register.html">
-                        <button>Get Started</button></a>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="platinum-Card">
+    <h3>3 Month</h3>
+    <h2>₹ 14500</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
+
+  <div class="platinum-Card">
+    <h3>6 Months</h3>
+    <h2>₹ 26000</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
+  <div class="platinum-Card">
+    <h3>Yearly</h3>
+    <h2>₹ 45000</h2>
+    <a href="register.html"><button class="btn">Get Started</button></a>
+  </div>
+</div>
     <script>
-        const moreBtn = document.getElementById('moreBtn');
-        const platinumHeading = document.getElementById('platinumHeading');
-        const cards = document.querySelectorAll(".platinum-Card");
+const moreBtn = document.getElementById('moreBtn');
+const platinumHeading = document.getElementById('platinumHeading');
+const platinumContainer = document.querySelector('.platinum-container');
 
-        // Initially hide cards
-        cards.forEach(card => card.style.display = "none");
-
-        moreBtn.addEventListener('click', () => {
-            // Hide the More button
-            moreBtn.style.display = 'none';
-
-            // Show the heading
-            platinumHeading.style.display = 'block';
-            platinumHeading.setAttribute('aria-hidden', 'false');
-
-            // Show all platinum cards
-            cards.forEach(card => {
-                card.style.display = 'flex'; // use flex to match your design
-                card.setAttribute('aria-hidden', 'false');
-            });
-        });
-    </script>
+moreBtn.addEventListener('click', () => {
+  moreBtn.style.display = 'none';
+  platinumHeading.style.display = 'block';
+  platinumContainer.style.display = 'flex';
+  window.scrollTo({ top: platinumHeading.offsetTop - 100, behavior: 'smooth' });
+});
+</script>
 
 
 
