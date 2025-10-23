@@ -13,58 +13,58 @@ body {
 }
 
 /* Navbar Styles */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 100px;
-            padding: 0 40px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(30, 30, 30, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            color: #35bdf2;
-        }
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100px;
+  padding: 0 40px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  color: #35bdf2;
+}
 
-        nav img {
-            width: auto;
-            height: 70px;
-            display: block;
-        }
+nav img {
+  width: auto;
+  height: 70px;
+  display: block;
+}
 
-        .nav-links {
-            display: flex;
-            gap: 30px;
-            align-items: center;
-            list-style: none;
-            color: #35bdf2;
-        }
+.nav-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  list-style: none;
+  color: #35bdf2;
+}
 
-        .nav-links a {
-            color: #35bdf2;
-            text-decoration: none;
-            font-size: 16px;
-            transition: color 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+.nav-links a {
+  color: #35bdf2;
+  text-decoration: none;
+  font-size: 16px;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-        .nav-links a:hover {
-            color: #5c5c5c;
-        }
+.nav-links a:hover {
+  color: #5c5c5c;
+}
 
-        .hamburger {
-            display: none;
-            font-size: 28px;
-            color: #35bdf2;
-            cursor: pointer;
-            z-index: 1001;
-        }
+.hamburger {
+  display: none;
+  font-size: 28px;
+  color: #35bdf2;
+  cursor: pointer;
+  z-index: 1001;
+}
 
 a:link {
   color: #35bdf2;
@@ -146,10 +146,12 @@ h1 {
   background-color: transparent;
   padding: 20px;
 }
+
 .card-back {
   background: #35bdf2;
 
 }
+
 .card-front img {
   width: 250px;
   height: 250px;
@@ -233,6 +235,7 @@ h1 {
     height: 50px;
   }
 }
+
 @media (max-width: 768px) {
   .team-header h1 {
     font-size: 2rem;

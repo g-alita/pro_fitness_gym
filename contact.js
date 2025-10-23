@@ -18,6 +18,6 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   });
 });
 
-  function toggleMenu() {
-    document.querySelector(".nav-links").classList.toggle("show");
-  }
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("show");
+}

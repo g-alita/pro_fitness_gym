@@ -20,6 +20,7 @@ nav {
   z-index: 1000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
+
 /* Navbar shrink effect */
 nav.scrolled {
   height: 70px;
@@ -36,6 +37,7 @@ nav img {
 nav.scrolled img {
   height: 55px;
 }
+
 nav img {
   width: auto;
   height: 70px;
@@ -48,6 +50,7 @@ nav img {
   align-items: center;
   list-style: none;
 }
+
 body {
   font-family: 'Poppins', sans-serif;
   background-color: rgba(226, 226, 227, 0.695);
@@ -82,11 +85,11 @@ body {
 /* Gallery Section */
 
 .gallery-section {
-    text-align: center;
-    margin: 40px auto;
-    max-width: 1200px;
-    padding: 20px;
-    padding-top: 90px;
+  text-align: center;
+  margin: 40px auto;
+  max-width: 1200px;
+  padding: 20px;
+  padding-top: 90px;
 }
 
 .heading {
@@ -147,9 +150,9 @@ body {
   max-height: 85%;
   border-radius: 10px;
   box-shadow: 0 0 20px rgba(135, 206, 250, 0.6),
-              0 0 40px rgba(135, 206, 250, 0.5),
-              0 0 60px rgba(135, 206, 250, 0.4),
-              0 0 80px rgba(135, 206, 250, 0.3);
+    0 0 40px rgba(135, 206, 250, 0.5),
+    0 0 60px rgba(135, 206, 250, 0.4),
+    0 0 80px rgba(135, 206, 250, 0.3);
   border: 3px solid rgba(135, 206, 250, 0.8);
   animation: fadeIn 0.3s ease;
   cursor: default;
@@ -191,6 +194,7 @@ body {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -238,6 +242,7 @@ body {
     height: 50px;
   }
 }
+
 /* Responsive */
 @media (max-width: 1024px) {
   .gallery {
