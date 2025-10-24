@@ -41,7 +41,7 @@
   }
 
   .nav-links a {
-      color: #35bdf2;
+      color: hsl(223, 98%, 45%,0.8);
       text-decoration: none;
       font-size: 16px;
       transition: color 0.3s ease;
@@ -57,7 +57,7 @@
   .hamburger {
       display: none;
       font-size: 28px;
-      color: #35bdf2;
+      color: hsl(223, 98%, 45%,0.8);
       cursor: pointer;
       z-index: 1001;
   }
@@ -70,7 +70,7 @@
 
   .contact-section h2 {
       font-size: 2.5rem;
-      color: #35bdf2;
+      color: hsl(223, 98%, 45%,0.8);
       margin-bottom: 20px;
   }
 
@@ -94,24 +94,52 @@
       flex-direction: column;
   }
 
-  .contact-form input,
-  .contact-form textarea {
-      background: #b9b8b8;
-      border: none;
-      padding: 15px;
-      margin-bottom: 15px;
-      color: white;
-      border-radius: 8px;
-      font-size: 1rem;
+.contact-form input,
+.contact-form select
+{
+  width: 100%;
+  background: #b9b8b8;
+  border: none;
+  padding: 15px;
+  margin-bottom: 15px;
+  color: white;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  appearance: none;
   }
 
   .contact-form input::placeholder,
-  .contact-form textarea::placeholder {
+  .contact-form select option[disabled]{
       color: rgba(255, 255, 255, 0.7);
   }
 
+ .contact-form select {
+  background: #b9b8b8;
+  color: white;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, white 50%),
+                    linear-gradient(135deg, white 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(1em + 2px),
+                       calc(100% - 15px) calc(1em + 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 40px; /* ensures arrow doesn't overlap text */
+}
+
+.contact-form select option {
+  background-color: #b9b8b8;
+  color: white;
+}
+
+/* Remove default browser arrow (for consistency) */
+.contact-form select::-ms-expand {
+  display: none;
+}
+
+ 
   .contact-form button {
-      background: #35bdf2;
+      background: hsl(223, 98%, 45%,0.8);
       color: white;
       padding: 15px;
       border: none;
@@ -133,7 +161,7 @@
 
   .contact-info h3 {
       margin-bottom: 10px;
-      color: #35bdf2;
+      color: hsl(223, 98%, 45%,0.8);
   }
 
   .contact-info a {
@@ -142,7 +170,7 @@
   }
 
   .contact-info a:hover {
-      color: #35bdf2;
+      color: hsl(223, 98%, 45%,0.8);
   }
 
   .contact-map {

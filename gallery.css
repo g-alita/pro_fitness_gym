@@ -59,7 +59,7 @@ body {
 }
 
 .nav-links a {
-  color: #35bdf2;
+  color: hsl(223, 98%, 45%,0.8);
   text-decoration: none;
   font-size: 16px;
   transition: color 0.3s ease;
@@ -76,7 +76,7 @@ body {
 .hamburger {
   display: none;
   font-size: 28px;
-  color: #35bdf2;
+  color: hsl(223, 98%, 45%,0.8);
   cursor: pointer;
   z-index: 1001;
 }
@@ -96,7 +96,7 @@ body {
   font-size: 2.5rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #35bdf2;
+  color: hsl(223, 98%, 45%,0.8);
   margin-bottom: 10px;
 }
 
@@ -123,7 +123,7 @@ body {
 
 .gallery img:hover {
   transform: translateY(-10px);
-  box-shadow: 0 0 20px #35bdf2, 0 0 40px rgba(53, 189, 242, 0.5);
+  box-shadow: 0 0 20px hsl(223, 98%, 45%,0.8), 0 0 40px rgba(53, 189, 242, 0.5);
 }
 
 /* Lightbox */
@@ -164,7 +164,7 @@ body {
   top: 20px;
   right: 40px;
   font-size: 50px;
-  color: #35bdf2;
+  color: hsl(223, 98%, 45%,0.8);
   cursor: pointer;
   z-index: 2001;
   transition: all 0.3s ease;

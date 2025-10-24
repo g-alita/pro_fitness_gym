@@ -12,7 +12,7 @@
     right: 30px;
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #35bdf2, #2a90bd);
+    background: linear-gradient(135deg, hsl(223, 98%, 45%,0.8), #2a90bd);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -68,7 +68,7 @@
 
 /* Chat Header */
 .chat-header {
-    background: linear-gradient(135deg, #35bdf2, #2a90bd);
+    background: linear-gradient(135deg, hsl(223, 98%, 45%,0.8), #2a90bd);
     color: white;
     padding: 20px;
     display: flex;
@@ -142,13 +142,13 @@
 }
 
 .message.user .message-content {
-    background: linear-gradient(135deg, #35bdf2, #2a90bd);
+    background: linear-gradient(135deg, hsl(223, 98%, 45%,0.8), #2a90bd);
     color: white;
     border-bottom-right-radius: 5px;
 }
 
 .message-content a {
-    color: #35bdf2;
+    color: hsl(223, 98%, 45%,0.8);
     text-decoration: none;
     font-weight: 600;
 }
@@ -171,8 +171,8 @@
 .quick-btn {
     padding: 8px 14px;
     background: #f0f0f0;
-    border: 1px solid #35bdf2;
-    color: #35bdf2;
+    border: 1px solid hsl(223, 98%, 45%,0.8);
+    color: hsl(223, 98%, 45%,0.8);
     border-radius: 20px;
     cursor: pointer;
     font-size: 12px;
@@ -180,7 +180,7 @@
 }
 
 .quick-btn:hover {
-    background: #35bdf2;
+    background: hsl(223, 98%, 45%,0.8);
     color: white;
 }
 
@@ -204,13 +204,13 @@
 }
 
 .chat-input input:focus {
-    border-color: #35bdf2;
+    border-color: hsl(223, 98%, 45%,0.8);
 }
 
 .chat-input button {
     width: 45px;
     height: 45px;
-    background: linear-gradient(135deg, #35bdf2, #2a90bd);
+    background: linear-gradient(135deg, hsl(223, 98%, 45%,0.8), #2a90bd);
     border: none;
     border-radius: 50%;
     color: white;
@@ -232,7 +232,7 @@
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-    background: #35bdf2;
+    background: hsl(223, 98%, 45%,0.8);
     border-radius: 10px;
 }
 
