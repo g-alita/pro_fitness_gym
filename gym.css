@@ -60,7 +60,7 @@ nav img {
 }
 
 .nav-links a {
-  color: #0000fe;
+  color: hsl(223, 98%, 45%,0.8);
   text-decoration: none;
   font-size: 16px;
   transition: color 0.3s ease;
@@ -77,7 +77,7 @@ nav img {
 .hamburger {
   display: none;
   font-size: 28px;
-  color: #0000fe;
+  color: hsl(223, 98%, 45%,0.8);/*hiiiii*/
   cursor: pointer;
   z-index: 1001;
 }
