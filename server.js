@@ -8,6 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files (HTML, CSS, JS, images)
+app.use(express.static('.'));
+
+
 // Connect to MongoDB (replace with your credentials)
 const contactDB = mongoose.createConnection(
   'mongodb+srv://preco870:123@cluster0.j0egfbv.mongodb.net/pro_fitness_contacts?retryWrites=true&w=majority&appName=Cluster0',
