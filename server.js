@@ -4,7 +4,11 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5500', 'http://127.0.0.1:5500'], // add your frontend URL/port here
+  methods: ['GET', 'POST'],
+  credentials: true,
+}));
 app.use(bodyParser.json());
 
 /* =========================================================
@@ -102,8 +106,8 @@ app.post('/api/signin', async (req, res) => {
 // Contact form endpoint
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, message } = req.body;
-    const contact = new Contact({ name, email, message });
+    const { name, email, phonenumber, message } = req.body;
+    const contact = new Contact({ name, email, phonenumber, message });
     await contact.save();
     res.status(201).json({ message: 'Contact info saved successfully!' });
   } catch (err) {
