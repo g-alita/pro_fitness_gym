@@ -132,7 +132,8 @@
   color: white;
 }
 
-/* Remove default browser arrow (for consistency) */
+ 
+
 .contact-form select::-ms-expand {
   display: none;
 }
