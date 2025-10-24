@@ -98,7 +98,7 @@
 .contact-form select
 {
   width: 100%;
-  background: #b9b8b8;
+  background-color: #b9b8b8;
   border: none;
   padding: 15px;
   margin-bottom: 15px;
@@ -115,7 +115,7 @@
   }
 
  .contact-form select {
-  background: #b9b8b8;
+  background-color: #b9b8b8;
   color: white;
   cursor: pointer;
   background-image: linear-gradient(45deg, transparent 50%, white 50%),
