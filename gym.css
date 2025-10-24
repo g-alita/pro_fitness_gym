@@ -107,7 +107,7 @@ nav img {
 }
 
 .content a {
-  font-family: "Playfair Display", serif;
+  font-family: balu bhai 2;
   font-size: 23px;
   color: #fff;
   text-decoration: none;
@@ -347,13 +347,6 @@ ul {
   margin-left: 10px;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  line-height: 1.6;
-}
-
 /* teams */
 .team-section {
   text-align: center;
@@ -561,8 +554,31 @@ body {
 
 .testimonial p {
   margin: 10px 0;
-  font-style: italic;
+  /*font-style: italic;*/
   font-size: 1.1em;
+}
+
+.cta1 {
+    text-align: center; 
+    font-family: baloo bhai2 ;         /* Center all text */
+       /* Optional: light background */
+    padding: 50px 20px;          /* Spacing around content */
+    margin: 20px auto;            /* Optional: spacing from other sections */
+    border-radius: 10px;          /* Optional: rounded corners */
+}
+
+.cta1 h3 {
+    font-size: 1.5rem; 
+    font-family: baloo bhai 2;             /* Make heading prominent */
+    margin-bottom: 15px;
+    color: #333;                  /* Heading color */
+}
+
+.cta1 p {
+    font-size: 1.2rem;
+    font-family: baloo bhai 2;
+    color: #555;                  /* Paragraph color */
+    margin: 0;
 }
 
 h4 {
@@ -571,7 +587,7 @@ h4 {
 }
 
 footer a {
-  color: black;
+  color: rgb(0, 0, 0);
   text-decoration: none;
   text-align: center;
 }
