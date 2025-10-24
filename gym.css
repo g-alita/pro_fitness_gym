@@ -147,6 +147,7 @@ p {
 
 li {
   color: black;
+  font-size: 18px;
 }
 
 /* next part */
@@ -161,7 +162,7 @@ li {
   position: relative;
 }
 
-h3 {
+h2 {
   margin-left: 80px;
   margin-right: 20px;
   color: #35bdf2;
