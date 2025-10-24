@@ -12,7 +12,7 @@
 <body>
 
   <nav>
-    <span><img src="photos/logo.png" alt="pro_fitness_logo" style="width: auto; height: 50px; display: block;"></span>
+    <span><img src="photos/logo.png" alt="pro_fitness_logo" style="width: auto; height: 70px; display: block;"></span>
     <div class="hamburger" onclick="toggleMenu()">
       <i class="fas fa-bars"></i>
     </div>
@@ -32,10 +32,23 @@
       <!-- Left: Form -->
       <div class="contact-form">
         <form id="contact" method="post">
-          <input type="text" id="name" placeholder="Your Name" required />
-          <input type="email" id="email" placeholder="Your Email" required />
-          <input type="phonenumber" id="phonenumber" placeholder="Phone Number" required />
-          <textarea id="message" rows="5" placeholder="Your Message" required></textarea>
+          <input type="text" id="name" placeholder="Your Name*" required />
+          <input type="phonenumber" id="phonenumber" placeholder="Phone Number*" required />
+          <input type="email" id="email" placeholder="Your Email*" required />
+          <input type="gender" id="gender" placeholder="Gender" />
+          <input type="age" id="age" placeholder="Age"  />
+          <div class="form-group">
+  <select id="goal" required>
+    <option value="" disabled selected>Your Fitness Goal*</option>
+    <option value="weightloss">Weight Loss</option>
+    <option value="muscle">Muscle Gain</option>
+    <option value="fitness">General Fitness</option>
+    <option value="cardio">Cardio Fitness</option>
+    <option value="strengthtraining">Strength Training</option>
+    <option value="yoga">Yoga & Flexibility</option>
+    <option value="zumba">Zumba</option>
+  </select>
+</div>
           <button type="submit">Send Message</button>
         </form>
         <p id="statusMessage" style="text-align:center; margin-top:10px;"></p>
@@ -66,40 +79,38 @@
   <script src="contact.js"></script>
 
   <script>
-    const form = document.getElementById('contact');
-    const statusMessage = document.getElementById('statusMessage');
+    const form = document.getElementById('contact-form'); // assign form id
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const gender = document.getElementById('gender').value.trim();
+  const age = parseInt(document.getElementById('age').value.trim()) || null;
+  const fitnessGoal = document.getElementById('fitnessGoal').value;
 
-      const name = document.getElementById('name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phonenumber = document.getElementById('phonenumber').value.trim();
-      const message = document.getElementById('message').value.trim();
-
-      try {
-        const response = await fetch('http://localhost:5000/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, message }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          statusMessage.style.color = 'lightgreen';
-          statusMessage.textContent = data.message;
-          form.reset();
-        } else {
-          statusMessage.style.color = 'red';
-          statusMessage.textContent = data.error || 'Something went wrong!';
-        }
-      } catch (err) {
-        statusMessage.style.color = 'red';
-        statusMessage.textContent = 'Server connection failed!';
-        console.error(err);
-      }
+  try {
+    const response = await fetch('http://localhost:5000/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, email, gender, age, fitnessGoal }),
     });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(data.message); // show popup
+      form.reset();
+    } else {
+      alert(data.error || 'Something went wrong!');
+    }
+  } catch (err) {
+    alert('Server connection failed!');
+    console.error(err);
+  }
+});
+
   </script>
 </body>
 

@@ -1,31 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 
 const app = express();
-app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500'], // add your frontend URL/port here
-  methods: ['GET', 'POST'],
-  credentials: true,
-}));
-app.use(bodyParser.json());
 
-/* =========================================================
-   1️⃣ MAIN DATABASE CONNECTION — pro_fitness_gym
-   Stores: Users, Logins
-========================================================= */
-const mainDB = mongoose.createConnection(
-  'mongodb+srv://preco870:123@cluster0.j0egfbv.mongodb.net/pro_fitness_gym?retryWrites=true&w=majority&appName=Cluster0',
-  { useNewUrlParser: true, useUnifiedTopology: true }
-);
+// Enable CORS for any frontend origin
+app.use(cors());
+app.use(express.json());
 
-mainDB.once('open', () => console.log('✅ Connected to pro_fitness_gym database'));
-
-/* =========================================================
-   2️⃣ CONTACT DATABASE CONNECTION — pro_fitness_contacts
-   Stores: Contact Form Submissions
-========================================================= */
+// Connect to MongoDB (replace with your credentials)
 const contactDB = mongoose.createConnection(
   'mongodb+srv://preco870:123@cluster0.j0egfbv.mongodb.net/pro_fitness_contacts?retryWrites=true&w=majority&appName=Cluster0',
   { useNewUrlParser: true, useUnifiedTopology: true }
@@ -33,90 +16,38 @@ const contactDB = mongoose.createConnection(
 
 contactDB.once('open', () => console.log('✅ Connected to pro_fitness_contacts database'));
 
-/* =========================================================
-   3️⃣ MODELS
-========================================================= */
-
-// User Schema
-const userSchema = new mongoose.Schema({
+// Contact Schema
+const contactSchema = new mongoose.Schema({
   name: String,
   phone: String,
   email: String,
-  password: String,
-  gender: String
-});
-const User = mainDB.model('User', userSchema);
-
-// Login Schema
-const loginSchema = new mongoose.Schema({
-  email: String,
-  password: String,
+  gender: String,
+  age: Number,
+  fitnessGoal: String,
   createdAt: { type: Date, default: Date.now }
 });
-const Login = mainDB.model('Login', loginSchema, 'logins');
 
-// Contact Schema (Stored in different DB)
-const contactSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  message: String,
-  createdAt: { type: Date, default: Date.now }
-});
 const Contact = contactDB.model('Contact', contactSchema);
 
-/* =========================================================
-   4️⃣ ROUTES
-========================================================= */
-
-// Registration endpoint
-app.post('/api/register', async (req, res) => {
-  try {
-    const { name, phone, email, password, gender } = req.body;
-    const user = new User({ name, phone, email, password, gender });
-    await user.save();
-    res.status(201).json({ message: 'User registered successfully!' });
-  } catch (err) {
-    res.status(500).json({ error: 'Registration failed' });
-  }
-});
-
-// Sign-in endpoint
-app.post('/api/signin', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format.' });
-    }
-    if (!password || password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters.' });
-    }
-
-    const user = await Login.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'Email not registered.' });
-    if (user.password !== password)
-      return res.status(400).json({ error: 'Incorrect password.' });
-
-    res.json({ message: 'Sign in successful!' });
-  } catch (err) {
-    res.status(500).json({ error: 'Sign in failed' });
-  }
-});
-
-// Contact form endpoint
+// Endpoint to save contact info
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, phonenumber, message } = req.body;
-    const contact = new Contact({ name, email, phonenumber, message });
+    const { name, phone, email, gender, age, fitnessGoal } = req.body;
+
+    if (!name || !phone || !email || !fitnessGoal) {
+      return res.status(400).json({ error: 'Please fill all required fields.' });
+    }
+
+    const contact = new Contact({ name, phone, email, gender, age, fitnessGoal });
     await contact.save();
-    res.status(201).json({ message: 'Contact info saved successfully!' });
+
+    res.status(201).json({ message: 'Your enquiry has been submitted. Our team will contact you soon.' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to save contact info' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to submit enquiry' });
   }
 });
 
-/* =========================================================
-   5️⃣ START SERVER
-========================================================= */
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
