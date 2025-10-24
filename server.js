@@ -102,8 +102,8 @@ app.post('/api/signin', async (req, res) => {
 // Contact form endpoint
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, message } = req.body;
-    const contact = new Contact({ name, email, message });
+    const { name, email, phonenumber, message } = req.body;
+    const contact = new Contact({ name, email, phonenumber, message });
     await contact.save();
     res.status(201).json({ message: 'Contact info saved successfully!' });
   } catch (err) {
