@@ -27,29 +27,6 @@ nav {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Navbar shrink effect */
-nav.scrolled {
-  height: 70px;
-  background: rgba(72, 71, 71, 0.85);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
-  padding: 0 30px;
-}
-
-nav img {
-  height: 70px;
-  transition: height 0.3s ease;
-}
-
-nav.scrolled img {
-  height: 55px;
-}
-
-nav img {
-  width: auto;
-  height: 70px;
-  display: block;
-}
-
 .nav-links {
   display: flex;
   gap: 30px;
@@ -156,11 +133,11 @@ body {
   max-width: 90%;
   max-height: 85%;
   border-radius: 10px;
-  box-shadow: 0 0 20px rgba(135, 206, 250, 0.6),
-    0 0 40px rgba(135, 206, 250, 0.5),
-    0 0 60px rgba(135, 206, 250, 0.4),
-    0 0 80px rgba(135, 206, 250, 0.3);
-  border: 3px solid rgba(135, 206, 250, 0.8);
+  box-shadow: 0 0 20px hsl(223, 98%, 45%,0.8),
+    0 0 40px hsl(223, 98%, 45%,0.8),
+    0 0 60px hsl(223, 98%, 45%,0.8),
+    0 0 80px hsl(223, 98%, 45%,0.8);
+  border: 3px solid hsl(223, 98%, 45%,0.8);
   animation: fadeIn 0.3s ease;
   cursor: default;
   pointer-events: auto;
