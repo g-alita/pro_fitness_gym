@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
 * {
   margin: 0;
   padding: 0;
@@ -88,6 +89,7 @@ nav img {
 }
 
 .main {
+  font-family: "Playfair Display", serif;
   position: relative;
   width: 100%;
   height: 100vh;
@@ -98,7 +100,6 @@ nav img {
 }
 
 .content h1 {
-  font-family: "Playfair Display", serif;
   display: flex;
   flex-wrap: wrap;
   font-size: 95px;
@@ -107,7 +108,7 @@ nav img {
 }
 
 .content a {
-  font-family: balu bhai 2;
+  font-family: "Playfair Display", serif;
   font-size: 23px;
   color: #fff;
   text-decoration: none;
@@ -356,7 +357,7 @@ ul {
 .team-section h1 {
   color: hsl(223, 98%, 45%, 0.8);
   font-size: 2.5rem;
-  margin-bottom: 40px;
+  margin-bottom: -20px;
 }
 
 .team-container {
@@ -525,6 +526,7 @@ ul {
 }
 
 .testimonial {
+  margin-top: 10px;
   display: none;
   font-size: 20px;
   padding: 10px;
@@ -553,28 +555,19 @@ ul {
 }
 
 .testimonial p {
-  margin: 10px 0;
+  /* margin: 10px 0; */
   /*font-style: italic;*/
   font-size: 1.1em;
 }
 
-.cta1 {
-    text-align: center; 
-    font-family: baloo bhai2 ;         /* Center all text */
-       /* Optional: light background */
-    padding: 50px 20px;          /* Spacing around content */
-    margin: 20px auto;            /* Optional: spacing from other sections */
-    border-radius: 10px;          /* Optional: rounded corners */
-}
-
-.cta1 h3 {
+.cta h3 {
     font-size: 1.5rem; 
     font-family: baloo bhai 2;             /* Make heading prominent */
     margin-bottom: 15px;
-    color: #333;                  /* Heading color */
+    color: hsl(223, 98%, 45%, 0.8);                  /* Heading color */
 }
 
-.cta1 p {
+.cta p {
     font-size: 1.2rem;
     font-family: baloo bhai 2;
     color: #555;                  /* Paragraph color */
@@ -588,10 +581,13 @@ h4 {
 
 footer a {
   color: rgb(0, 0, 0);
+  font-family: "baloo bhai 2", cursive;
   text-decoration: none;
   text-align: center;
 }
-
+footer a:hover {
+  color: hsl(223, 98%, 45%, 0.8);
+}
 /* Responsive background video */
 @media (min-aspect-ratio: 16/9) {
   .background-clip {

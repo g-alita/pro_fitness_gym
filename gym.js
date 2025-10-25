@@ -52,7 +52,7 @@ function nextTestimonial() {
 }
 
 // Auto-slide every 4 seconds
-setInterval(nextTestimonial, 4000);
+setInterval(nextTestimonial, 3000);
 
 // Pause testimonial slider on hover
 const slider = document.querySelector('.testimonial-slider');
@@ -63,4 +63,8 @@ if (slider) {
   slider.addEventListener('mouseleave', () => {
     interval = setInterval(nextTestimonial, 4000);
   });
+}
+// Toggle mobile menu
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("show");
 }

@@ -5,7 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Services | Pro Fitness Gym</title>
-  <link rel="stylesheet" href="services.css" />
+  <link rel="stylesheet" href="services.css">
+   <link rel="stylesheet" href="chatbot.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
@@ -99,6 +100,38 @@
   <section class="cta-section">
     <h2>Take the First Step Today</h2>
     <a href="register.html" class="cta-btn">Join Pro Fitness</a>
+     <div class="chat-button" onclick="toggleChat()">
+            <i class="fas fa-comments"></i>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header">
+                <h3><i class="fas fa-dumbbell"></i> Pro Fitness Assistant</h3>
+                <span class="close-btn" onclick="toggleChat()">×</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-content">
+                        👋 Hi! I'm your Pro Fitness virtual assistant. How can I help you today?
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-options" id="quickOptions">
+                <button class="quick-btn" onclick="sendQuickMessage('membership')">Membership Plans</button>
+                <button class="quick-btn" onclick="sendQuickMessage('timings')">Gym Timings</button>
+                <button class="quick-btn" onclick="sendQuickMessage('trial')">Free Trial</button>
+                <button class="quick-btn" onclick="sendQuickMessage('location')">Location</button>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <script src="chatbot.js"></script>
   </section>
   <script src="services.js"></script>
 </body>

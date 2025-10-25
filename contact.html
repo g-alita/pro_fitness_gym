@@ -5,14 +5,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact Us - Pro Fitness</title>
-  <link rel="stylesheet" href="contact.css" />
+  <link rel="stylesheet" href="contact.css">
+   <link rel="stylesheet" href="chatbot.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body>
 
   <nav>
-    <span><img src="photos/logo.png" alt="pro_fitness_logo" style="width: auto; height: 70px; display: block;"></span>
+    <span><img src="photos/logo.png" alt="pro_fitness_logo" style="width: auto; height: 50px; display: block;"></span>
     <div class="hamburger" onclick="toggleMenu()">
       <i class="fas fa-bars"></i>
     </div>
@@ -34,7 +35,6 @@
         <form id="contact-form" method="post">
           <input type="text" id="name" placeholder="Your Name*" required />
           <input type="phonenumber" id="phonenumber" placeholder="Phone Number*" required />
-          <input type="email" id="email" placeholder="Your Email*" required />
           <input type="gender" id="gender" placeholder="Gender" />
           <input type="age" id="age" placeholder="Age"  />
           <div class="form-group">
@@ -46,7 +46,7 @@
     <option value="cardio">Cardio Fitness</option>
     <option value="strengthtraining">Strength Training</option>
     <option value="yoga">Yoga & Flexibility</option>
-    <option value="zumba">Zumba</option>
+    <option value="zumba">Group Sessions</option>
   </select>
 </div>
           <button type="submit">Send Message</button>
@@ -54,11 +54,11 @@
         <p id="statusMessage" style="text-align:center; margin-top:10px;"></p>
         <div class="contact-info">
           <h3>Pro Fitness Gym</h3>
-          <p><strong>Address:</strong> Address: Pro Fitness Gym, Bhuian Tola, Matwari Opp. Gandhi Maidan,
+          <p><strong>Address:</strong> Pro Fitness Gym, Bhuian Tola, Matwari Opp. Gandhi Maidan,
             Hazaribagh-825301</p>
           <p><strong>Phone:</strong> +91 9508128298</p>
-          <p><strong>Email:</strong> <a href="mailto:alita.gope@gmail.com"
-              style="color: #5c5c5c;">alita.gope@gmail.com</a></p>
+          <p><strong>Email:</strong> <a href="mailto:profitnessgym11@gmail.com"
+              style="color: #5c5c5c;">profitnessgym11@gmail.com</a></p>
           <p><strong>Instagram:</strong> <a
               href="https://www.instagram.com/pro_fitness_gym_hazaribagh?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
               style="color: #5c5c5c; text-decoration: none;">pro_fitness_gym_hazaribagh</a></p>
@@ -75,6 +75,38 @@
       </div>
 
     </div>
+     <div class="chat-button" onclick="toggleChat()">
+            <i class="fas fa-comments"></i>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header">
+                <h3><i class="fas fa-dumbbell"></i> Pro Fitness Assistant</h3>
+                <span class="close-btn" onclick="toggleChat()">×</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-content">
+                        👋 Hi! I'm your Pro Fitness virtual assistant. How can I help you today?
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-options" id="quickOptions">
+                <button class="quick-btn" onclick="sendQuickMessage('membership')">Membership Plans</button>
+                <button class="quick-btn" onclick="sendQuickMessage('timings')">Gym Timings</button>
+                <button class="quick-btn" onclick="sendQuickMessage('trial')">Free Trial</button>
+                <button class="quick-btn" onclick="sendQuickMessage('location')">Location</button>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <script src="chatbot.js"></script>
   </section>
   <script src="contact.js"></script>
   
