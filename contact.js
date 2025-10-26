@@ -28,27 +28,41 @@ document.querySelectorAll('.nav-links a').forEach(link => {
 
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phonenumber').value.trim();
-  const email = document.getElementById('email').value.trim();
   const gender = document.getElementById('gender').value.trim();
   const age = parseInt(document.getElementById('age').value.trim()) || null;
   const fitnessGoal = document.getElementById('goal').value;
+  const statusMessage = document.getElementById('statusMessage');
+  
+  // Validate required fields
+  if (!name || !phone || !fitnessGoal) {
+    statusMessage.textContent = 'Please fill in all required fields!';
+    statusMessage.style.color = 'red';
+    return;
+  }
+
   try {
-    const response = await fetch('http://localhost:5000/api/contact', {
+    statusMessage.textContent = 'Sending...';
+    statusMessage.style.color = '#333';
+    
+    const response = await fetch('http://localhost:3000/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, email, gender, age, fitnessGoal }),
+      body: JSON.stringify({ name, phone, gender, age, fitnessGoal }),
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      alert(data.message); // show popup
+      statusMessage.textContent = data.message;
+      statusMessage.style.color = 'green';
       form.reset();
     } else {
-      alert(data.error || 'Something went wrong!');
+      statusMessage.textContent = data.error || 'Something went wrong!';
+      statusMessage.style.color = 'red';
     }
   } catch (err) {
-    alert('Server connection failed!');
+    statusMessage.textContent = 'Server connection failed! Please check if the server is running.';
+    statusMessage.style.color = 'red';
     console.error(err);
   }
 });
