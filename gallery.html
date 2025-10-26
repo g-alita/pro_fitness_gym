@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery | Pro Fitness Gym</title>
   <link rel="stylesheet" href="gallery.css">
+   <link rel="stylesheet" href="chatbot.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
@@ -42,7 +43,9 @@
       <img src="gallery/gym35.jpeg" alt="Crossfit">
       <img src="gallery/gym34.jpeg" alt="Fitness Class">
       <img src="gallery/gym32.jpeg" alt="Members at Workout">
+      <img src="photos/pool.jpeg" alt="Yoga Area">
       <img src="gallery/gym30.jpeg" alt="Yoga Area">
+      <img src="photos/outdoor2.jpeg" alt="Yoga Area">
       <img src="gallery/gym26.jpeg" alt="Workout Area">
       <img src="gallery/gym21.jpeg" alt="Cardio Zone">
       <img src="gallery/gym18.jpeg" alt="Zumba Session">
@@ -61,7 +64,38 @@
     <img class="lightbox-img" src="" alt="Expanded Photo">
     <span class="caption"></span>
   </div>
+ <div class="chat-button" onclick="toggleChat()">
+            <i class="fas fa-comments"></i>
+        </div>
 
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header">
+                <h3><i class="fas fa-dumbbell"></i> Pro Fitness Assistant</h3>
+                <span class="close-btn" onclick="toggleChat()">×</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-content">
+                        👋 Hi! I'm your Pro Fitness virtual assistant. How can I help you today?
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-options" id="quickOptions">
+                <button class="quick-btn" onclick="sendQuickMessage('membership')">Membership Plans</button>
+                <button class="quick-btn" onclick="sendQuickMessage('timings')">Gym Timings</button>
+                <button class="quick-btn" onclick="sendQuickMessage('trial')">Free Trial</button>
+                <button class="quick-btn" onclick="sendQuickMessage('location')">Location</button>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+        <script src="chatbot.js"></script>
   <script src="gallery.js"></script>
 </body>
 
