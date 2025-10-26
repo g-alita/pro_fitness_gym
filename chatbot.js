@@ -72,7 +72,7 @@ function getResponse(message) {
     for (let key in responses) {
         if (lowerMessage.includes(key)) return responses[key];
     }
-    return "I'm here to help! You can ask me about membership plans, gym timings, free trials, location, parking, facilities, and more. 😊";
+    return "We are unable to process your question. Please contact us at 9508128298 for more details. 😊";
 }
 
 function handleKeyPress(event) {

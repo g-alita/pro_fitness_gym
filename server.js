@@ -1,57 +1,64 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+// Toggle mobile menu
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("show");
+}
 
-const app = express();
-
-// Enable CORS for any frontend origin
-app.use(cors());
-app.use(express.json());
-
-// Serve static files (HTML, CSS, JS, images)
-app.use(express.static('.'));
-
-
-// Connect to MongoDB (replace with your credentials)
-const contactDB = mongoose.createConnection(
-  'mongodb+srv://preco870:123@cluster0.j0egfbv.mongodb.net/pro_fitness_contacts?retryWrites=true&w=majority&appName=Cluster0',
-  { useNewUrlParser: true, useUnifiedTopology: true }
-);
-
-contactDB.once('open', () => console.log('✅ Connected to pro_fitness_contacts database'));
-
-// Contact Schema
-const contactSchema = new mongoose.Schema({
-  name: String,
-  phone: String,
-  email: String,
-  gender: String,
-  age: Number,
-  fitnessGoal: String,
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Contact = contactDB.model('Contact', contactSchema);
-
-// Endpoint to save contact info
-app.post('/api/contact', async (req, res) => {
-  try {
-    const { name, phone, email, gender, age, fitnessGoal } = req.body;
-
-    if (!name || !phone || !email || !fitnessGoal) {
-      return res.status(400).json({ error: 'Please fill all required fields.' });
+// Smooth scroll for same-page links
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', function (e) {
+    const href = this.getAttribute('href');
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.substring(1);
+      const target = document.getElementById(targetId);
+      if (target) {
+        window.scrollTo({
+          top: target.offsetTop - 50,
+          behavior: 'smooth'
+        });
+      }
     }
-
-    const contact = new Contact({ name, phone, email, gender, age, fitnessGoal });
-    await contact.save();
-
-    res.status(201).json({ message: 'Your enquiry has been submitted. Our team will contact you soon.' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to submit enquiry' });
+  });
+});
+// Shrink navbar when scrolling
+window.addEventListener("scroll", () => {
+  const navbar = document.querySelector("nav");
+  if (window.scrollY > 50) {
+    navbar.classList.add("scrolled");
+  } else {
+    navbar.classList.remove("scrolled");
   }
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+
+
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("show");
+}
+
+window.addEventListener("scroll", () => {
+  const navbar = document.querySelector("nav");
+  if (window.scrollY > 50) {
+    navbar.classList.add("scrolled");
+  } else {
+    navbar.classList.remove("scrolled");
+  }
+});
+
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', function (e) {
+    const href = this.getAttribute('href');
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.substring(1);
+      const target = document.getElementById(targetId);
+      if (target) {
+        window.scrollTo({
+          top: target.offsetTop - 50,
+          behavior: 'smooth'
+        });
+      }
+    }
+  });
+});

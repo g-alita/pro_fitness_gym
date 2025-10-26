@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -37,6 +40,7 @@ nav img {
 }
 
 .nav-links {
+  font-family: "baloo bhai 2", sans-serif;
   display: flex;
   gap: 30px;
   align-items: center;
@@ -81,6 +85,7 @@ h1 {
 }
 
 .team-header {
+  font-family: "Poppins", sans-serif;
   text-align: center;
   padding: 80px 20px 20px;
 }
@@ -148,6 +153,7 @@ h1 {
 }
 
 .card-back {
+font-family: "baloo bhai 2", sans-serif;
   background: hsl(223, 98%, 45%,0.8);
 
 }

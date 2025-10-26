@@ -22,7 +22,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     document.querySelector(".nav-links").classList.toggle("show");
   }
 
-  const form = document.getElementById('contact'); // assign form id
+  const form = document.getElementById('contact-form'); // assign form id
   form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -32,7 +32,6 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   const gender = document.getElementById('gender').value.trim();
   const age = parseInt(document.getElementById('age').value.trim()) || null;
   const fitnessGoal = document.getElementById('goal').value;
-
   try {
     const response = await fetch('http://localhost:5000/api/contact', {
       method: 'POST',
