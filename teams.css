@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&family=Poppins:wght@300;400;500;600;700&display=swap');
 
+/* ==== RESET ==== */
 * {
   margin: 0;
   padding: 0;
@@ -8,14 +8,13 @@
 }
 
 body {
-  font-family: 'Poppins';
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+  font-family: "Poppins", sans-serif;
   background-color: rgba(226, 226, 227, 0.695);
+  color: #333;
+  overflow-x: hidden;
 }
 
-/* Navbar Styles */
+/* ==== NAVBAR ==== */
 nav {
   display: flex;
   justify-content: space-between;
@@ -28,34 +27,31 @@ nav {
   width: 100%;
   background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(10px);
-  z-index: 1000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  color: hsl(223, 98%, 45%,0.8);
+  z-index: 1000;
 }
 
 nav img {
-  width: auto;
   height: 70px;
   display: block;
 }
 
 .nav-links {
-  font-family: "baloo bhai 2", sans-serif;
   display: flex;
   gap: 30px;
   align-items: center;
   list-style: none;
-  color: hsl(223, 98%, 45%,0.8);
 }
 
 .nav-links a {
-  color: hsl(223, 98%, 45%,0.8);
   text-decoration: none;
+  color: hsl(223, 98%, 45%, 0.8);
+  font-weight: 500;
   font-size: 16px;
-  transition: color 0.3s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: color 0.3s ease;
 }
 
 .nav-links a:hover {
@@ -65,70 +61,45 @@ nav img {
 .hamburger {
   display: none;
   font-size: 28px;
-  color: hsl(223, 98%, 45%,0.8);
+  color: hsl(223, 98%, 45%, 0.8);
   cursor: pointer;
-  z-index: 1001;
 }
 
-a:link {
-  color: hsl(223, 98%, 45%,0.8);
-  background-color: transparent;
-  text-decoration: none;
-  margin-left: 20px;
-}
-
-h1 {
-  font-size: 3rem;
-  color: hsl(223, 98%, 45%,0.8);
-  margin-bottom: 30px;
-  margin-top: 30px;
+/* ==== TEAM SECTION ==== */
+.team-section {
+  padding: 140px 40px 60px;
+  text-align: center;
 }
 
 .team-header {
-  font-family: "Poppins", sans-serif;
-  text-align: center;
-  padding: 80px 20px 20px;
+  font-family: "Baloo Bhai 2", sans-serif;
+  font-size: 2.8rem;
+  color: hsl(223, 98%, 45%, 0.8);
+  margin-bottom: 50px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.team-header p {
-  font-size: 1.2rem;
-  color: rgba(226, 226, 227, 0.695);
-  margin-top: 10px;
-}
-
-.section-title {
-  font-size: 40px;
-  color: hsl(223, 98%, 45%,0.8);
-  margin-top: 10px;
-}
-
-.team-section {
-  padding: 60px 20px;
-  text-align: center;
-}
-
-/* Team Cards Grid */
 .team-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 100px;
-  margin-left: 40px;
-  margin-right: 40px;
+  gap: 60px;
 }
 
-/* Team Card Styles */
+/* ==== CARD STYLES ==== */
 .team-card {
   perspective: 1000px;
   width: 300px;
   height: 400px;
+  transition: transform 0.8s;
 }
 
 .card-inner {
   width: 100%;
   height: 100%;
-  transition: transform 0.8s;
   transform-style: preserve-3d;
+  transition: transform 0.8s ease;
   position: relative;
 }
 
@@ -142,65 +113,99 @@ h1 {
   width: 100%;
   height: 100%;
   border-radius: 20px;
-  overflow: hidden;
   backface-visibility: hidden;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: transparent;
-  padding: 20px;
-}
-
-.card-back {
-font-family: "baloo bhai 2", sans-serif;
-  background: hsl(223, 98%, 45%,0.8);
-
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s;
 }
 
 .card-front img {
-  width: 250px;
-  height: 250px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 15px;
-  border: 4px solid hsl(223, 98%, 45%,0.8);
+  border: 5px solid hsl(223, 98%, 45%, 0.8);
+  margin-bottom: 20px;
 }
 
 .card-front h3 {
-  font-size: 1.3rem;
-  margin-bottom: 5px;
-  color: hsl(223, 98%, 45%,0.8);
+  font-size: 1.4rem;
+  color: hsl(223, 98%, 45%, 0.8);
 }
-
 
 .card-back {
+  background: linear-gradient(180deg, hsl(223, 98%, 45%, 0.8), #2a90bd);
+  color: white;
   transform: rotateY(180deg);
-}
-
-.card-back h4 {
-  margin-bottom: 10px;
-  color: hsl(223, 98%, 45%,0.8);
+  font-family: "Baloo Bhai 2", sans-serif;
+  text-align: center;
+  padding: 25px;
 }
 
 .card-back p {
-  font-size: 1.1rem;
-  color: #fff;
-  margin-bottom: 20px;
+  font-size: 1rem;
+  margin: 6px 0;
 }
 
 .socials a {
   color: #fff;
-  margin: 0 10px;
-  font-size: 18px;
+  font-size: 20px;
+  margin-top: 15px;
   transition: color 0.3s;
 }
 
 .socials a:hover {
-  color: hsl(223, 98%, 45%,0.8);
+  color: #000;
 }
 
-/* Responsive Navbar */
+/* ==== CHAT BUTTON ==== */
+.chat-button {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, hsl(223, 98%, 45%, 0.8), #2a90bd);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-size: 28px;
+  box-shadow: 0 4px 15px rgba(53, 189, 242, 0.4);
+  cursor: pointer;
+  z-index: 1001;
+  transition: transform 0.3s ease;
+}
+
+.chat-button:hover {
+  transform: scale(1.1);
+}
+
+/* ==== RESPONSIVE DESIGN ==== */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .team-header {
+    font-size: 2.4rem;
+  }
+
+  .team-container {
+    gap: 40px;
+  }
+
+  .team-card {
+    width: 270px;
+    height: 370px;
+  }
+}
+
+/* Mobile Screens */
 @media (max-width: 768px) {
   .hamburger {
     display: block;
@@ -214,10 +219,8 @@ font-family: "baloo bhai 2", sans-serif;
     height: calc(100vh - 100px);
     background: rgba(30, 30, 30, 0.98);
     flex-direction: column;
-    gap: 0;
     padding: 30px 20px;
     transition: right 0.4s ease;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
   }
 
   .nav-links.show {
@@ -228,10 +231,32 @@ font-family: "baloo bhai 2", sans-serif;
     width: 100%;
     padding: 15px 10px;
     border-bottom: 1px solid rgba(53, 189, 242, 0.2);
-    justify-content: flex-start;
+  }
+
+  .team-section {
+    padding: 120px 20px 60px;
+  }
+
+  .team-container {
+    gap: 20px;
+  }
+
+  .team-card {
+    width: 90%;
+    max-width: 320px;
+  }
+
+  .card-front img {
+    width: 200px;
+    height: 200px;
+  }
+
+  .card-back p {
+    font-size: 0.95rem;
   }
 }
 
+/* Small Phones */
 @media (max-width: 480px) {
   nav {
     padding: 0 15px;
@@ -240,17 +265,22 @@ font-family: "baloo bhai 2", sans-serif;
   nav img {
     height: 50px;
   }
-}
 
-@media (max-width: 768px) {
-  .team-header h1 {
-    font-size: 2rem;
+  .team-header {
+    font-size: 1.8rem;
   }
 
-  /* Team Cards Mobile Adjustments */
-  .team-container {
-    gap: 50px;
-    margin-left: 20px;
-    margin-right: 20px;
+  .team-card {
+    width: 90%;
+    height: auto;
+  }
+
+  .card-front img {
+    width: 180px;
+    height: 180px;
+  }
+
+  .card-back p {
+    font-size: 0.9rem;
   }
 }
