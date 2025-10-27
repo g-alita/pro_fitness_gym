@@ -226,6 +226,13 @@ ul {
     border-bottom: 1px solid rgba(53, 189, 242, 0.2);
     justify-content: flex-start;
   }
+  .team h2{
+    font-size: 1.8rem;
+    font-weight: bolder;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -240,12 +247,13 @@ ul {
 
 @media (max-width: 768px) {
   .slideshow img {
-    height: 250px;
+    height: 450px !important;
   }
 }
 
 .section .text,
 .section .image {
+  
   flex: 1 1 45%;
   margin: 20px 0;
 }
@@ -364,6 +372,7 @@ ul {
 .team-container {
   display: flex;
   flex-wrap: wrap;
+  flex-direction: row;
   justify-content: center;
   gap: 20px;
 }
@@ -668,7 +677,10 @@ footer a:hover {
   .section h2 {
     font-size: 1.6rem;
   }
-
+.team-section h1 {
+    font-size: 2rem;
+    margin-left: 10px;
+}
   .section ul li {
     font-size: 15px;
     margin-left: 0;
@@ -704,7 +716,7 @@ footer a:hover {
   }
 
   .content h1 {
-    font-size: 2.2rem;
+    font-size: 3rem !important;
     line-height: 1.3;
   }
 
