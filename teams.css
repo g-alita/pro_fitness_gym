@@ -67,7 +67,7 @@ nav img {
 
 /* ==== TEAM SECTION ==== */
 .team-section {
-  padding: 140px 40px 60px;
+  padding: 160px 40px 60px; /* extra top padding for navbar */
   text-align: center;
 }
 
@@ -83,8 +83,11 @@ nav img {
 .team-container {
   display: flex;
   flex-wrap: wrap;
+  flex-direction: row;
   justify-content: center;
   gap: 60px;
+  margin-top: 40px;
+  padding-bottom: 40px;
 }
 
 /* ==== CARD STYLES ==== */
@@ -101,6 +104,7 @@ nav img {
   transform-style: preserve-3d;
   transition: transform 0.8s ease;
   position: relative;
+  will-change: transform; /* smooth animation */
 }
 
 .team-card:hover .card-inner {
@@ -114,19 +118,26 @@ nav img {
   height: 100%;
   border-radius: 20px;
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden; /* Safari fix */
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background-color: rgba(226, 226, 227, 0.695);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s;
 }
 
+.card-front {
+    background: rgba(226, 226, 227, 0.695);
+  box-shadow: none;
+  
+}
+
 .card-front img {
-  width: 220px;
-  height: 220px;
+  width: 250px;
+  height: 250px;
   border-radius: 50%;
   object-fit: cover;
   border: 5px solid hsl(223, 98%, 45%, 0.8);
@@ -160,7 +171,7 @@ nav img {
 }
 
 .socials a:hover {
-  color: #000;
+  color: hsl(223, 98%, 45%, 0.8);
 }
 
 /* ==== CHAT BUTTON ==== */
@@ -188,8 +199,6 @@ nav img {
 }
 
 /* ==== RESPONSIVE DESIGN ==== */
-
-/* Tablets */
 @media (max-width: 1024px) {
   .team-header {
     font-size: 2.4rem;
@@ -205,7 +214,6 @@ nav img {
   }
 }
 
-/* Mobile Screens */
 @media (max-width: 768px) {
   .hamburger {
     display: block;
@@ -234,16 +242,19 @@ nav img {
   }
 
   .team-section {
-    padding: 120px 20px 60px;
+    padding: 140px 20px 60px;
   }
 
   .team-container {
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
   }
 
   .team-card {
     width: 90%;
     max-width: 320px;
+    min-height: 320px;
   }
 
   .card-front img {
@@ -256,7 +267,6 @@ nav img {
   }
 }
 
-/* Small Phones */
 @media (max-width: 480px) {
   nav {
     padding: 0 15px;
@@ -272,7 +282,6 @@ nav img {
 
   .team-card {
     width: 90%;
-    height: auto;
   }
 
   .card-front img {
