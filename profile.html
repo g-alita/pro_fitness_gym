@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Pro Fitness Gym</title>
+    <link rel="stylesheet" href="gym.css">
+    <link rel="stylesheet" href="chatbot.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <span><img src="photos/logo.png" alt="pro_fitness_logo"
+                    style="width: auto; height: 50px; display: block;"></span>
+            <div class="hamburger" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+            <ul class="nav-links">
+                <a href="gym.html"><i class="fas fa-home"></i> Home</a>
+                <a href="teams.html"><i class="fas fa-users"></i> Our Team</a>
+                <a href="services.html"><i class="fas fa-dumbbell"></i> Services</a>
+                <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
+                <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="section" style="padding-top: 120px;">
+        <div style="max-width: 800px; margin: 0 auto; padding: 40px;">
+            <h1 style="text-align: center; color: hsl(223, 98%, 45%, 0.8); margin-bottom: 30px;">
+                <i class="fas fa-user"></i> User Profile
+            </h1>
+            
+            <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 120px; height: 120px; border-radius: 50%; background: hsl(223, 98%, 45%, 0.8); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user" style="font-size: 60px; color: white;"></i>
+                    </div>
+                    <h2 id="userEmailDisplay" style="color: hsl(223, 98%, 45%, 0.8);"></h2>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: hsl(223, 98%, 45%, 0.8); margin-bottom: 10px;"><i class="fas fa-info-circle"></i> Account Information</h3>
+                    <p><strong>Email:</strong> <span id="userEmailInfo"></span></p>
+                    <p><strong>Member Since:</strong> <span id="memberSince"></span></p>
+                    <p><strong>Account Type:</strong> User</p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: hsl(223, 98%, 45%, 0.8); margin-bottom: 10px;"><i class="fas fa-dumbbell"></i> Membership</h3>
+                    <p><strong>Status:</strong> Active</p>
+                    <p><strong>Plan:</strong> Monthly</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="logout()" style="padding: 12px 30px; background-color: hsl(223, 98%, 45%, 0.8); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="gym.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Check if user is logged in
+        if (!localStorage.getItem('userLoggedIn')) {
+            window.location.href = 'signin-user.html';
+        }
+
+        // Display user email
+        const userEmail = localStorage.getItem('userEmail') || 'User';
+        document.getElementById('userEmailDisplay').textContent = userEmail;
+        document.getElementById('userEmailInfo').textContent = userEmail;
+        
+        // Set member since date (you can update this from backend)
+        const memberSince = new Date().toLocaleDateString();
+        document.getElementById('memberSince').textContent = memberSince;
+
+        function logout() {
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('userEmail');
+            window.location.href = 'gym.html';
+        }
+
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+    </script>
+</body>
+
+</html>
+

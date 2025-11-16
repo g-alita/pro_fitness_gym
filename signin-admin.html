@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Sign In - Pro Fitness Gym</title>
+  <link rel="stylesheet" href="signin.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+  <div class="blur-overlay"></div>
+  <div class="container">
+    <div class="logo">
+      <img src="photos/logo.png" alt="Pro Fitness Logo" style="width: 150px; height: auto;">
+      <h1>Pro Fitness Gym</h1>
+    </div>
+    <h2><i class="fas fa-user-shield"></i> SIGN IN AS ADMIN</h2>
+
+    <form class="signin-form" id="adminSignInForm">
+      <div class="login-toggle">
+        <button type="button" class="toggle-btn active" id="emailToggle" onclick="switchLoginType('email')">
+          <i class="fas fa-envelope"></i> Email
+        </button>
+        <button type="button" class="toggle-btn" id="phoneToggle" onclick="switchLoginType('phone')">
+          <i class="fas fa-phone"></i> Phone
+        </button>
+      </div>
+      <input type="email" id="adminEmail" placeholder="Admin Email address" required />
+      <input type="tel" id="adminPhone" placeholder="Admin Phone number" style="display: none;" />
+
+      <div class="password-wrapper">
+        <input type="password" placeholder="Admin Password" id="adminPassword" required />
+        <span class="toggle" onclick="togglePassword('adminPassword')">
+          <i class="fas fa-eye" id="adminPasswordToggle"></i>
+        </span>
+      </div>
+
+      <button type="submit">SIGN IN</button>
+
+      <div class="links">
+        <a href="#">Forgot password?</a>
+        <p><a href="gym.html"><i class="fas fa-home"></i> Back to Home</a></p>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const toggle = document.getElementById(inputId + 'Toggle');
+      if (input.type === 'password') {
+        input.type = 'text';
+        toggle.classList.remove('fa-eye');
+        toggle.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        toggle.classList.remove('fa-eye-slash');
+        toggle.classList.add('fa-eye');
+      }
+    }
+
+    function switchLoginType(type) {
+      const emailInput = document.getElementById('adminEmail');
+      const phoneInput = document.getElementById('adminPhone');
+      const emailToggle = document.getElementById('emailToggle');
+      const phoneToggle = document.getElementById('phoneToggle');
+      
+      if (type === 'email') {
+        emailInput.style.display = 'block';
+        phoneInput.style.display = 'none';
+        emailInput.required = true;
+        phoneInput.required = false;
+        emailToggle.classList.add('active');
+        phoneToggle.classList.remove('active');
+        emailInput.value = '';
+      } else {
+        emailInput.style.display = 'none';
+        phoneInput.style.display = 'block';
+        emailInput.required = false;
+        phoneInput.required = true;
+        emailToggle.classList.remove('active');
+        phoneToggle.classList.add('active');
+        phoneInput.value = '';
+      }
+    }
+
+    document.getElementById('adminSignInForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const emailInput = document.getElementById('adminEmail');
+      const phoneInput = document.getElementById('adminPhone');
+      const password = document.getElementById('adminPassword').value;
+      
+      let email = emailInput.value;
+      let phone = phoneInput.value;
+      const isEmailLogin = emailInput.style.display !== 'none';
+      
+      if (isEmailLogin) {
+        // Email format validation
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(email)) {
+          alert('Invalid email format.');
+          return;
+        }
+      } else {
+        // Phone validation
+        const phonePattern = /^[0-9]{10}$/;
+        if (!phonePattern.test(phone)) {
+          alert('Invalid phone number. Please enter 10 digits.');
+          return;
+        }
+      }
+      
+      if (password.length < 8) {
+        alert('Password must be at least 8 characters.');
+        return;
+      }
+
+      // Save login state
+      localStorage.setItem('adminLoggedIn', 'true');
+      if (isEmailLogin) {
+        localStorage.setItem('adminEmail', email);
+      } else {
+        localStorage.setItem('adminPhone', phone);
+      }
+      localStorage.removeItem('userLoggedIn');
+      
+      // Redirect to home page
+      window.location.href = 'gym.html';
+    });
+  </script>
+</body>
+</html>
+
