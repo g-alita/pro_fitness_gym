@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Pro Fitness Gym</title>
+    <link rel="stylesheet" href="gym.css">
+    <link rel="stylesheet" href="chatbot.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Handsontable CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <span><img src="photos/logo.png" alt="pro_fitness_logo"
+                    style="width: auto; height: 50px; display: block;"></span>
+            <div class="hamburger" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+            <ul class="nav-links">
+                <a href="gym.html"><i class="fas fa-home"></i> Home</a>
+                <a href="teams.html"><i class="fas fa-users"></i> Our Team</a>
+                <a href="services.html"><i class="fas fa-dumbbell"></i> Services</a>
+                <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
+                <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="section" style="padding-top: 120px;">
+        <div style="max-width: 95%; margin: 0 auto; padding: 20px;">
+            <h1 style="text-align: center; color: hsl(223, 98%, 45%, 0.8); margin-bottom: 20px;">
+                <i class="fas fa-user-shield"></i> Admin Dashboard - User Management
+            </h1>
+            
+            <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 id="adminInfoDisplay" style="color: hsl(223, 98%, 45%, 0.8); margin-bottom: 10px;"></h2>
+                    <p style="color: #666;"><strong>Account Type:</strong> Administrator | <strong>Access Level:</strong> Full Access</p>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="admin-toolbar">
+                    <div class="toolbar-left">
+                        <button onclick="saveChanges()" class="btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button onclick="downloadExcel()" class="btn-secondary">
+                            <i class="fas fa-download"></i> Download Excel
+                        </button>
+                        <button onclick="refreshData()" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="toolbar-right">
+                        <input type="text" id="searchInput" placeholder="Search..." class="search-input" onkeyup="handleSearch()">
+                        <button onclick="toggleRecentChanges()" class="btn-secondary">
+                            <i class="fas fa-history"></i> Recent Changes
+                        </button>
+                        <button onclick="logout()" class="btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Changes Panel -->
+                <div id="recentChangesPanel" class="recent-changes-panel" style="display: none;">
+                    <h3><i class="fas fa-history"></i> Recent Changes</h3>
+                    <div id="recentChangesList"></div>
+                    <button onclick="clearRecentChanges()" class="btn-secondary" style="margin-top: 10px;">Clear History</button>
+                </div>
+
+                <!-- Excel-like Table Container -->
+                <div id="excelTable" style="margin-top: 20px;"></div>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Handsontable JS -->
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="gym.js"></script>
+    <script src="auth.js"></script>
+    <script src="admin.js"></script>
+    <script>
+        // Check if admin is logged in
+        if (!localStorage.getItem('adminLoggedIn')) {
+            window.location.href = 'signin-admin.html';
+        }
+
+        // Display admin info
+        const adminEmail = localStorage.getItem('adminEmail');
+        const adminPhone = localStorage.getItem('adminPhone');
+        const adminInfo = adminEmail || adminPhone || 'Admin';
+        document.getElementById('adminInfoDisplay').textContent = adminInfo;
+
+        function logout() {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminEmail');
+            localStorage.removeItem('adminPhone');
+            window.location.href = 'gym.html';
+        }
+
+        function toggleMenu() {
+            document.querySelector(".nav-links").classList.toggle("show");
+        }
+    </script>
+</body>
+
+</html>
+
