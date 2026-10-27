@@ -5,15 +5,151 @@ const path = require("path");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const { OAuth2Client } = require("google-auth-library");
 
 // ===== App Setup =====
 const app = express();
 const PORT = process.env.PORT || 3000;
+const googleOAuthClient = new OAuth2Client();
+
+function getGoogleAdminEmails() {
+  return (process.env.GOOGLE_ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 // ===== Middleware =====
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// ===== Google Admin Sign-In =====
+app.get("/api/auth/google/config", (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    return res.status(503).json({
+      success: false,
+      message: "Google sign-in is not configured on the server."
+    });
+  }
+
+  res.json({ clientId });
+});
+
+app.post("/api/auth/google/admin", async (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const allowedEmails = getGoogleAdminEmails();
+  const credential = req.body && req.body.credential;
+
+  if (!clientId || allowedEmails.length === 0) {
+    return res.status(503).json({
+      success: false,
+      message: "Google admin sign-in is not configured on the server."
+    });
+  }
+  if (typeof credential !== "string" || credential.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "A Google credential is required."
+    });
+  }
+
+  try {
+    const ticket = await googleOAuthClient.verifyIdToken({
+      idToken: credential,
+      audience: clientId
+    });
+    const payload = ticket.getPayload();
+    const email = payload && payload.email;
+
+    if (!email || payload.email_verified !== true) {
+      return res.status(401).json({
+        success: false,
+        message: "Use a Google account with a verified email address."
+      });
+    }
+    if (!allowedEmails.includes(email.toLowerCase())) {
+      return res.status(403).json({
+        success: false,
+        message: "This Google account is not authorized for admin access."
+      });
+    }
+
+    res.json({ success: true, email });
+  } catch (error) {
+    console.error("Google ID token verification failed:", error.message);
+    res.status(401).json({
+      success: false,
+      message: "Google account could not be verified. Please try again."
+    });
+  }
+});
+
+app.post("/api/auth/google/user", async (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const credential = req.body && req.body.credential;
+
+  if (!clientId) {
+    return res.status(503).json({
+      success: false,
+      message: "Google sign-in is not configured on the server."
+    });
+  }
+  if (typeof credential !== "string" || credential.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "A Google credential is required."
+    });
+  }
+
+  let email;
+  try {
+    const ticket = await googleOAuthClient.verifyIdToken({
+      idToken: credential,
+      audience: clientId
+    });
+    const payload = ticket.getPayload();
+    email = payload && payload.email;
+
+    if (!email || payload.email_verified !== true) {
+      return res.status(401).json({
+        success: false,
+        message: "Use a Google account with a verified email address."
+      });
+    }
+  } catch (error) {
+    console.error("Google user ID token verification failed:", error.message);
+    return res.status(401).json({
+      success: false,
+      message: "Google account could not be verified. Please try again."
+    });
+  }
+
+  try {
+    const registeredUser = await User.exists({
+      email: new RegExp(`^${escapeRegex(email)}$`, "i")
+    });
+    if (!registeredUser) {
+      return res.status(403).json({
+        success: false,
+        message: "This Google account is not on the registered user list. Please contact the gym."
+      });
+    }
+
+    res.json({ success: true, email });
+  } catch (error) {
+    console.error("Google user sign-in failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Unable to verify your user account right now. Please try again later."
+    });
+  }
+});
 
 // ===== MongoDB Connection =====
 // Replace the connection string below with your Atlas URI from MongoDB
