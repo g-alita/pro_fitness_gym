@@ -28,6 +28,12 @@
 
       <button type="submit">SIGN IN</button>
 
+      <div class="google-signin-section">
+        <div class="auth-divider"><span>OR</span></div>
+        <div id="googleSignInButton"></div>
+        <p id="googleSignInStatus" class="google-signin-status" role="status" aria-live="polite"></p>
+      </div>
+
       <div class="links">
         <a href="#">Forgot password?</a>
         <p>Don't have an account? <a href="contact.html">Sign up</a></p>
@@ -75,7 +81,74 @@
       // Redirect to home page
       window.location.href = 'gym.html';
     });
+
+    function loadGoogleIdentityServices() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Google sign-in could not be loaded. Please try again later.'));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function handleGoogleCredential(response) {
+      const status = document.getElementById('googleSignInStatus');
+      status.textContent = 'Verifying your Google account...';
+
+      try {
+        const verificationResponse = await fetch('/api/auth/google/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential })
+        });
+        const result = await verificationResponse.json();
+        if (!verificationResponse.ok) {
+          throw new Error(result.message || 'Google sign-in failed.');
+        }
+
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userEmail', result.email);
+        localStorage.removeItem('adminLoggedIn');
+        window.location.href = 'gym.html';
+      } catch (error) {
+        console.error('Google user sign-in failed:', error);
+        status.textContent = error.message || 'Google sign-in failed. Please try again.';
+      }
+    }
+
+    async function initializeGoogleSignIn() {
+      const status = document.getElementById('googleSignInStatus');
+
+      try {
+        const configResponse = await fetch('/api/auth/google/config');
+        const config = await configResponse.json();
+        if (!configResponse.ok) {
+          throw new Error(config.message || 'Google sign-in is not configured.');
+        }
+
+        await loadGoogleIdentityServices();
+        google.accounts.id.initialize({
+          client_id: config.clientId,
+          callback: handleGoogleCredential
+        });
+        google.accounts.id.renderButton(document.getElementById('googleSignInButton'), {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          logo_alignment: 'left',
+          width: Math.min(300, document.getElementById('googleSignInButton').clientWidth)
+        });
+      } catch (error) {
+        console.error('Unable to initialize Google user sign-in:', error);
+        status.textContent = error.message || 'Google sign-in could not be initialized.';
+      }
+    }
+
+    initializeGoogleSignIn();
   </script>
 </body>
 </html>
-

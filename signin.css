@@ -130,6 +130,38 @@ button:hover {
   background-color: hsl(223, 98%, 45%, 1);
 }
 
+.google-signin-section {
+  width: 100%;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #777;
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid #ddd;
+}
+
+#googleSignInButton {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.google-signin-status {
+  margin-top: 8px;
+  color: #a12622;
+  font-size: 13px;
+}
+
 /* Links */
 .links {
   margin-top: 15px;
