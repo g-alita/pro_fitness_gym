@@ -162,6 +162,28 @@ button:hover {
   font-size: 13px;
 }
 
+.auth-status {
+  color: #a12622;
+  font-size: 13px;
+}
+
+.link-button {
+  width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: hsl(223, 98%, 45%, 0.8);
+  font-size: 14px;
+  font-weight: normal;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  background: none;
+  color: hsl(223, 98%, 45%, 1);
+}
+
 /* Links */
 .links {
   margin-top: 15px;

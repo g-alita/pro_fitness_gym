@@ -103,7 +103,12 @@
         const adminInfo = adminEmail || adminPhone || 'Admin';
         document.getElementById('adminInfoDisplay').textContent = adminInfo;
 
-        function logout() {
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (error) {
+                console.error('Unable to end admin session:', error);
+            }
             localStorage.removeItem('adminLoggedIn');
             localStorage.removeItem('adminEmail');
             localStorage.removeItem('adminPhone');
@@ -117,4 +122,3 @@
 </body>
 
 </html>
-

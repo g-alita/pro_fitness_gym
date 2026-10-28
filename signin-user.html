@@ -17,16 +17,17 @@
     <h2><i class="fas fa-user"></i> SIGN IN AS USER</h2>
 
     <form class="signin-form" id="userSignInForm">
-      <input type="email" id="userEmail" placeholder="Email address" required />
+      <input type="email" id="userEmail" placeholder="Email address" autocomplete="email" required />
 
       <div class="password-wrapper">
-        <input type="password" placeholder="Password" id="userPassword" required />
+        <input type="password" placeholder="Password" id="userPassword" autocomplete="current-password" minlength="8" maxlength="128" required />
         <span class="toggle" onclick="togglePassword('userPassword')">
           <i class="fas fa-eye" id="userPasswordToggle"></i>
         </span>
       </div>
 
       <button type="submit">SIGN IN</button>
+      <p id="passwordSignInStatus" class="auth-status" role="status" aria-live="polite"></p>
 
       <div class="google-signin-section">
         <div class="auth-divider"><span>OR</span></div>
@@ -35,7 +36,8 @@
       </div>
 
       <div class="links">
-        <a href="#">Forgot password?</a>
+        <button type="button" class="link-button" id="requestPasswordLink">Set up / forgot password?</button>
+        <p id="passwordSetupStatus" class="auth-status" role="status" aria-live="polite"></p>
         <p>Don't have an account? <a href="contact.html">Sign up</a></p>
         <p><a href="gym.html"><i class="fas fa-home"></i> Back to Home</a></p>
       </div>
@@ -59,27 +61,56 @@
 
     document.getElementById('userSignInForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const email = document.getElementById('userEmail').value;
+      const email = document.getElementById('userEmail').value.trim();
       const password = document.getElementById('userPassword').value;
-      
-      // Email format validation
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(email)) {
-        alert('Invalid email format.');
-        return;
+      const status = document.getElementById('passwordSignInStatus');
+      status.textContent = 'Signing in...';
+
+      try {
+        const response = await fetch('/api/auth/password/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, accountType: 'user' })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Sign-in failed.');
+        }
+
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userEmail', result.email);
+        localStorage.removeItem('adminLoggedIn');
+        window.location.href = 'gym.html';
+      } catch (error) {
+        console.error('User email/password sign-in failed:', error);
+        status.textContent = error.message || 'Unable to sign in. Please try again.';
       }
-      if (password.length < 8) {
-        alert('Password must be at least 8 characters.');
+    });
+
+    document.getElementById('requestPasswordLink').addEventListener('click', async function() {
+      const email = document.getElementById('userEmail').value.trim();
+      const status = document.getElementById('passwordSetupStatus');
+      if (!email) {
+        status.textContent = 'Enter your registered email address first.';
         return;
       }
 
-      // Save login state
-      localStorage.setItem('userLoggedIn', 'true');
-      localStorage.setItem('userEmail', email);
-      localStorage.removeItem('adminLoggedIn');
-      
-      // Redirect to home page
-      window.location.href = 'gym.html';
+      status.textContent = 'Requesting password setup email...';
+      try {
+        const response = await fetch('/api/auth/password/request-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, accountType: 'user' })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Unable to request a password setup email.');
+        }
+        status.textContent = result.message;
+      } catch (error) {
+        console.error('User password setup request failed:', error);
+        status.textContent = error.message || 'Unable to request a password setup email.';
+      }
     });
 
     function loadGoogleIdentityServices() {
