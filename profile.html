@@ -81,7 +81,12 @@
         const memberSince = new Date().toLocaleDateString();
         document.getElementById('memberSince').textContent = memberSince;
 
-        function logout() {
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (error) {
+                console.error('Unable to end user session:', error);
+            }
             localStorage.removeItem('userLoggedIn');
             localStorage.removeItem('userEmail');
             window.location.href = 'gym.html';
@@ -94,4 +99,3 @@
 </body>
 
 </html>
-
