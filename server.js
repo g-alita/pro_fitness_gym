@@ -23,6 +23,13 @@ const USER_PHONE_COLLECTION_NAME = "user number";
 const USER_PHONE_AUTHENTICATOR_COLLECTION_NAME = "user_phone_authenticators";
 const USER_EMAIL_OTP_COLLECTION_NAME = "user_email_login_otps";
 const ADMIN_EMAIL_OTP_COLLECTION_NAME = "admin_email_login_otps";
+const contactSubmissionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many contact submissions. Please try again later." }
+});
 const ADMIN_HIDDEN_COLLECTIONS = new Set([
   "admin_allowlist",
   "passwordcredentials",
@@ -1120,6 +1127,7 @@ const enquirySchema = new mongoose.Schema({
   gender: String,
   age: Number,
   fitnessGoal: String,
+  message: String,
   date: { type: Date, default: Date.now },
 });
 
@@ -1217,25 +1225,74 @@ app.get("/signin-admin", (req, res) =>
 );
 
 // ===== API Endpoint for Contact Form =====
-app.post("/api/contact", async (req, res) => {
+app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
+  const { name, phone, gender = "", age = null, fitnessGoal, message = "" } = req.body || {};
+  if (typeof name !== "string" || !name.trim() || name.trim().length > 120 ||
+      typeof phone !== "string" || !phone.trim() || phone.trim().length > 40 ||
+      typeof gender !== "string" || gender.length > 40 ||
+      (age !== null && (!Number.isInteger(age) || age < 1 || age > 120)) ||
+      typeof fitnessGoal !== "string" || !fitnessGoal.trim() || fitnessGoal.length > 100 ||
+      typeof message !== "string" || message.length > 2000) {
+    return res.status(400).json({
+      success: false,
+      message: "Please check your contact details and try again."
+    });
+  }
+
+  const transport = createSmtpTransport();
+  const contactEmail = process.env.CONTACT_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
+  if (!transport || !contactEmail) {
+    return res.status(503).json({
+      success: false,
+      message: "Contact email is not configured. Please contact the gym by phone."
+    });
+  }
+
+  const enquiry = {
+    name: name.trim(),
+    phone: phone.trim(),
+    gender: gender.trim(),
+    age,
+    fitnessGoal: fitnessGoal.trim(),
+    message: message.trim()
+  };
+
   try {
-    const { name, phone, gender, age, fitnessGoal } = req.body;
+    await new Enquiry(enquiry).save();
+  } catch (error) {
+    console.error("Failed to save contact form enquiry:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to submit your enquiry right now. Please try again later."
+    });
+  }
 
-    // Save to MongoDB
-    const newEnquiry = new Enquiry({ name, phone, gender, age, fitnessGoal });
-    await newEnquiry.save();
-
-    console.log("📩 New enquiry saved:", newEnquiry);
+  try {
+    await transport.sendMail({
+      from: process.env.SMTP_FROM,
+      to: contactEmail,
+      subject: `New gym enquiry from ${enquiry.name}`,
+      text: [
+        "A new contact form submission was received.",
+        "",
+        `Name: ${enquiry.name}`,
+        `Phone: ${enquiry.phone}`,
+        `Gender: ${enquiry.gender || "Not provided"}`,
+        `Age: ${enquiry.age ?? "Not provided"}`,
+        `Fitness goal: ${enquiry.fitnessGoal}`,
+        `Message: ${enquiry.message || "Not provided"}`
+      ].join("\n")
+    });
 
     res.json({
       success: true,
-      message: "✅ Thank you! Your enquiry has been saved. We'll contact you soon.",
+      message: "Thank you! Your enquiry was sent successfully. We'll contact you soon."
     });
   } catch (error) {
-    console.error("❌ Error saving enquiry:", error);
-    res.status(500).json({
+    console.error("Contact form processing failed:", error.code || error.message);
+    res.status(502).json({
       success: false,
-      message: "❌ Failed to save enquiry. Please try again later.",
+      message: "Your enquiry was saved, but the email could not be sent. Please call the gym to confirm."
     });
   }
 });

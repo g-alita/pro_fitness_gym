@@ -33,9 +33,10 @@
       <div class="contact-form">
         <form id="contact-form" method="post">
           <input type="text" id="name" placeholder="Your Name*" required />
-          <input type="phonenumber" id="phonenumber" placeholder="Phone Number*" required />
+          <input type="tel" id="phonenumber" placeholder="Phone Number*" autocomplete="tel" required />
           <input type="gender" id="gender" placeholder="Gender" />
-          <input type="age" id="age" placeholder="Age"  />
+          <input type="number" id="age" placeholder="Age" min="1" max="120" />
+          <textarea id="message" name="message" placeholder="Your message (optional)" rows="4" maxlength="2000"></textarea>
           <div class="form-group">
   <select id="goal" required>
     <option value="" disabled selected>Your Fitness Goal*</option>
