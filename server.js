@@ -11,7 +11,6 @@ const crypto = require("crypto");
 const QRCode = require("qrcode");
 const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
-const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString("hex"), 12);
 
 // ===== App Setup =====
 const app = express();
@@ -23,13 +22,15 @@ const USER_EMAIL_COLLECTION_NAME = "user mail";
 const USER_PHONE_COLLECTION_NAME = "user number";
 const USER_PHONE_AUTHENTICATOR_COLLECTION_NAME = "user_phone_authenticators";
 const USER_EMAIL_OTP_COLLECTION_NAME = "user_email_login_otps";
+const ADMIN_EMAIL_OTP_COLLECTION_NAME = "admin_email_login_otps";
 const ADMIN_HIDDEN_COLLECTIONS = new Set([
   "admin_allowlist",
   "passwordcredentials",
   "passwordresettokens",
   USER_PHONE_AUTHENTICATOR_COLLECTION_NAME,
   "user_phone_enrollment_tokens",
-  USER_EMAIL_OTP_COLLECTION_NAME
+  USER_EMAIL_OTP_COLLECTION_NAME,
+  ADMIN_EMAIL_OTP_COLLECTION_NAME
 ]);
 const ADMIN_DATASET_LABELS = {
   "members sheet 1": "Members Sheet 1",
@@ -340,14 +341,6 @@ async function isAuthorizedUserSession(session) {
   return Boolean(authenticator);
 }
 
-const passwordLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: "Too many sign-in attempts. Please try again later." }
-});
-
 const passwordResetRequestLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 3,
@@ -404,6 +397,22 @@ const userEmailOtpVerifyLimiter = rateLimit({
   message: { success: false, message: "Too many email code attempts. Please try again later." }
 });
 
+const adminEmailOtpRequestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many email code requests. Please try again later." }
+});
+
+const adminEmailOtpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many email code attempts. Please try again later." }
+});
+
 const userTotpSetupLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
@@ -453,167 +462,192 @@ app.post("/api/auth/logout", (req, res) => {
   res.json({ success: true });
 });
 
-app.post("/api/auth/email/user/request-code", userEmailOtpRequestLimiter, async (req, res) => {
-  const { email } = req.body || {};
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ success: false, message: "Enter a valid email address." });
-  }
-
-  const appBaseUrl = process.env.APP_BASE_URL;
-  const transport = createSmtpTransport();
-  if (!appBaseUrl || !transport) {
-    return res.status(503).json({
-      success: false,
-      message: "Email sign-in is not configured. Please contact the gym."
-    });
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-  let codeHash;
-  try {
-    const baseUrl = new URL(appBaseUrl);
-    if (!["http:", "https:"].includes(baseUrl.protocol)) {
-      throw new Error("APP_BASE_URL must use HTTP or HTTPS.");
+function createEmailOtpRequestHandler(accountType, collectionName, signInPage) {
+  return async (req, res) => {
+    const { email } = req.body || {};
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ success: false, message: "Enter a valid email address." });
     }
 
-    if (!await isAccountAllowed("user", normalizedEmail)) {
-      return res.json({
-        success: true,
-        message: "If the email is on the user allowlist, a sign-in code will be sent."
+    const appBaseUrl = process.env.APP_BASE_URL;
+    const transport = createSmtpTransport();
+    if (!appBaseUrl || !transport) {
+      return res.status(503).json({
+        success: false,
+        message: "Email sign-in is not configured. Please contact the gym."
       });
     }
 
-    const code = String(crypto.randomInt(100000, 1000000));
-    codeHash = crypto.createHmac("sha256", authSessionSecret)
-      .update(`${normalizedEmail}:${code}`)
-      .digest("hex");
-    const otpCollection = getGymDatabase().collection(USER_EMAIL_OTP_COLLECTION_NAME);
-    await otpCollection.createIndex({ email: 1 }, { unique: true });
-    await otpCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    const recentRequest = await otpCollection.findOne({
-      email: normalizedEmail,
-      createdAt: { $gt: new Date(Date.now() - 60 * 1000) }
-    });
-    if (recentRequest) {
-      return res.json({
-        success: true,
-        message: "If the email is on the user allowlist, a sign-in code will be sent."
-      });
-    }
+    const normalizedEmail = email.trim().toLowerCase();
+    let codeHash;
+    try {
+      const baseUrl = new URL(appBaseUrl);
+      if (!["http:", "https:"].includes(baseUrl.protocol)) {
+        throw new Error("APP_BASE_URL must use HTTP or HTTPS.");
+      }
 
-    await otpCollection.updateOne(
-      { email: normalizedEmail },
-      {
-        $set: {
-          codeHash,
-          attempts: 0,
-          createdAt: new Date(),
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+      if (!await isAccountAllowed(accountType, normalizedEmail)) {
+        return res.json({
+          success: true,
+          message: "If the email belongs to an authorized account, a sign-in code will be sent."
+        });
+      }
+
+      const otpCollection = getGymDatabase().collection(collectionName);
+      await otpCollection.createIndex({ email: 1 }, { unique: true });
+      await otpCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+      const recentRequest = await otpCollection.findOne({
+        email: normalizedEmail,
+        createdAt: { $gt: new Date(Date.now() - 60 * 1000) }
+      });
+      if (recentRequest) {
+        return res.json({
+          success: true,
+          message: "If the email belongs to an authorized account, a sign-in code will be sent."
+        });
+      }
+
+      const code = String(crypto.randomInt(100000, 1000000));
+      codeHash = crypto.createHmac("sha256", authSessionSecret)
+        .update(`${normalizedEmail}:${code}`)
+        .digest("hex");
+      await otpCollection.updateOne(
+        { email: normalizedEmail },
+        {
+          $set: {
+            codeHash,
+            attempts: 0,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+          }
+        },
+        { upsert: true }
+      );
+
+      const signInUrl = new URL(signInPage, baseUrl);
+      await transport.sendMail({
+        from: process.env.SMTP_FROM,
+        to: normalizedEmail,
+        subject: "Your Pro Fitness Gym sign-in code",
+        text: `Your Pro Fitness Gym sign-in code is ${code}. It expires in 10 minutes. If you did not request this, you can ignore this email.\n\nSign in: ${signInUrl.toString()}`
+      });
+
+      res.json({
+        success: true,
+        message: "If the email belongs to an authorized account, a sign-in code will be sent."
+      });
+    } catch (error) {
+      if (codeHash) {
+        try {
+          await getGymDatabase().collection(collectionName)
+            .deleteOne({ email: normalizedEmail, codeHash });
+        } catch (cleanupError) {
+          console.error(`Failed to remove unsent ${accountType} email sign-in code:`, cleanupError.message);
         }
-      },
-      { upsert: true }
-    );
-
-    const signInUrl = new URL("/signin-user.html", baseUrl);
-    await transport.sendMail({
-      from: process.env.SMTP_FROM,
-      to: normalizedEmail,
-      subject: "Your Pro Fitness Gym sign-in code",
-      text: `Your Pro Fitness Gym sign-in code is ${code}. It expires in 10 minutes. If you did not request this, you can ignore this email.\n\nSign in: ${signInUrl.toString()}`
-    });
-
-    res.json({
-      success: true,
-      message: "If the email is on the user allowlist, a sign-in code will be sent."
-    });
-  } catch (error) {
-    if (codeHash) {
-      try {
-        await getGymDatabase().collection(USER_EMAIL_OTP_COLLECTION_NAME)
-          .deleteOne({ email: normalizedEmail, codeHash });
-      } catch (cleanupError) {
-        console.error("Failed to remove unsent user email sign-in code:", cleanupError.message);
       }
-    }
-    console.error("User email sign-in code request failed:", error.code || error.message);
-    const smtpDnsFailure = ["EDNS", "ENOTFOUND", "EAI_AGAIN"].includes(error.code);
-    res.status(smtpDnsFailure ? 503 : 500).json({
-      success: false,
-      message: smtpDnsFailure
-        ? "The email server could not be found. Please check the SMTP_HOST setting or contact the gym."
-        : "Unable to send a sign-in code right now. Please try again later."
-    });
-  }
-});
-
-app.post("/api/auth/email/user/verify-code", userEmailOtpVerifyLimiter, async (req, res) => {
-  const { email, code } = req.body || {};
-  if (!isValidEmail(email) || typeof code !== "string" || !/^\d{6}$/.test(code)) {
-    return res.status(400).json({
-      success: false,
-      message: "Enter a valid email address and six-digit sign-in code."
-    });
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
-  try {
-    if (!await isAccountAllowed("user", normalizedEmail)) {
-      return res.status(401).json({
+      console.error(`${accountType} email sign-in code request failed:`, error.code || error.message);
+      const smtpDnsFailure = ["EDNS", "ENOTFOUND", "EAI_AGAIN"].includes(error.code);
+      res.status(smtpDnsFailure ? 503 : 500).json({
         success: false,
-        message: "The email or sign-in code is incorrect or expired."
+        message: smtpDnsFailure
+          ? "The email server could not be found. Please check the SMTP_HOST setting or contact the gym."
+          : "Unable to send a sign-in code right now. Please try again later."
+      });
+    }
+  };
+}
+
+function createEmailOtpVerifyHandler(accountType, collectionName) {
+  return async (req, res) => {
+    const { email, code } = req.body || {};
+    if (!isValidEmail(email) || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a valid email address and six-digit sign-in code."
       });
     }
 
-    const otpCollection = getGymDatabase().collection(USER_EMAIL_OTP_COLLECTION_NAME);
-    const otp = await otpCollection.findOne({
-      email: normalizedEmail,
-      expiresAt: { $gt: new Date() },
-      attempts: { $lt: 5 }
-    });
-    const codeHash = crypto.createHmac("sha256", authSessionSecret)
-      .update(`${normalizedEmail}:${code}`)
-      .digest("hex");
-    const storedHash = otp ? Buffer.from(otp.codeHash, "hex") : Buffer.alloc(0);
-    const candidateHash = Buffer.from(codeHash, "hex");
-    const hashMatches = storedHash.length === candidateHash.length &&
-      storedHash.length > 0 &&
-      crypto.timingSafeEqual(storedHash, candidateHash);
-    if (!otp || !hashMatches) {
-      if (otp) {
-        await otpCollection.updateOne(
-          { _id: otp._id, attempts: { $lt: 5 }, expiresAt: { $gt: new Date() } },
-          { $inc: { attempts: 1 } }
-        );
+    const normalizedEmail = email.trim().toLowerCase();
+    try {
+      if (!await isAccountAllowed(accountType, normalizedEmail)) {
+        return res.status(401).json({
+          success: false,
+          message: "The email or sign-in code is incorrect or expired."
+        });
       }
-      return res.status(401).json({
+
+      const otpCollection = getGymDatabase().collection(collectionName);
+      const otp = await otpCollection.findOne({
+        email: normalizedEmail,
+        expiresAt: { $gt: new Date() },
+        attempts: { $lt: 5 }
+      });
+      const codeHash = crypto.createHmac("sha256", authSessionSecret)
+        .update(`${normalizedEmail}:${code}`)
+        .digest("hex");
+      const storedHash = otp ? Buffer.from(otp.codeHash, "hex") : Buffer.alloc(0);
+      const candidateHash = Buffer.from(codeHash, "hex");
+      const hashMatches = storedHash.length === candidateHash.length &&
+        storedHash.length > 0 &&
+        crypto.timingSafeEqual(storedHash, candidateHash);
+      if (!otp || !hashMatches) {
+        if (otp) {
+          await otpCollection.updateOne(
+            { _id: otp._id, attempts: { $lt: 5 }, expiresAt: { $gt: new Date() } },
+            { $inc: { attempts: 1 } }
+          );
+        }
+        return res.status(401).json({
+          success: false,
+          message: "The email or sign-in code is incorrect or expired."
+        });
+      }
+
+      const consumed = await otpCollection.deleteOne({
+        _id: otp._id,
+        codeHash,
+        attempts: { $lt: 5 },
+        expiresAt: { $gt: new Date() }
+      });
+      if (consumed.deletedCount !== 1 || !await isAccountAllowed(accountType, normalizedEmail)) {
+        return res.status(401).json({
+          success: false,
+          message: "The email or sign-in code is incorrect or expired."
+        });
+      }
+
+      setAuthSession(req, res, normalizedEmail, accountType);
+      res.json({ success: true, email: normalizedEmail });
+    } catch (error) {
+      console.error(`${accountType} email sign-in code verification failed:`, error.message);
+      res.status(500).json({
         success: false,
-        message: "The email or sign-in code is incorrect or expired."
+        message: "Unable to verify the sign-in code right now. Please try again later."
       });
     }
+  };
+}
 
-    const consumed = await otpCollection.deleteOne({
-      _id: otp._id,
-      codeHash,
-      attempts: { $lt: 5 },
-      expiresAt: { $gt: new Date() }
-    });
-    if (consumed.deletedCount !== 1 || !await isAccountAllowed("user", normalizedEmail)) {
-      return res.status(401).json({
-        success: false,
-        message: "The email or sign-in code is incorrect or expired."
-      });
-    }
-
-    setAuthSession(req, res, normalizedEmail, "user");
-    res.json({ success: true, email: normalizedEmail });
-  } catch (error) {
-    console.error("User email sign-in code verification failed:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Unable to verify the sign-in code right now. Please try again later."
-    });
-  }
-});
+app.post(
+  "/api/auth/email/user/request-code",
+  userEmailOtpRequestLimiter,
+  createEmailOtpRequestHandler("user", USER_EMAIL_OTP_COLLECTION_NAME, "/signin-user.html")
+);
+app.post(
+  "/api/auth/email/user/verify-code",
+  userEmailOtpVerifyLimiter,
+  createEmailOtpVerifyHandler("user", USER_EMAIL_OTP_COLLECTION_NAME)
+);
+app.post(
+  "/api/auth/email/admin/request-code",
+  adminEmailOtpRequestLimiter,
+  createEmailOtpRequestHandler("admin", ADMIN_EMAIL_OTP_COLLECTION_NAME, "/signin-admin.html")
+);
+app.post(
+  "/api/auth/email/admin/verify-code",
+  adminEmailOtpVerifyLimiter,
+  createEmailOtpVerifyHandler("admin", ADMIN_EMAIL_OTP_COLLECTION_NAME)
+);
 
 app.post("/api/auth/phone/admin/setup-authenticator", adminTotpSetupLimiter, async (req, res) => {
   const { phone, setupToken } = req.body || {};
@@ -837,43 +871,11 @@ app.post("/api/auth/phone/user/verify-totp", userTotpVerifyLimiter, async (req, 
   }
 });
 
-app.post("/api/auth/password/login", passwordLoginLimiter, async (req, res) => {
-  const { email, password, accountType } = req.body || {};
-  if (!isValidEmail(email) || typeof password !== "string" ||
-      accountType !== "admin") {
-    return res.status(400).json({
-      success: false,
-      message: "Enter a valid email address and password."
-    });
-  }
-
-  try {
-    const normalizedEmail = email.trim().toLowerCase();
-    const allowed = await isAccountAllowed(accountType, normalizedEmail);
-    const account = allowed
-      ? await PasswordCredential.findOne({ email: normalizedEmail, accountType })
-      : null;
-    const validPassword = await bcrypt.compare(
-      password,
-      account ? account.passwordHash : DUMMY_PASSWORD_HASH
-    );
-
-    if (!allowed || !account || !validPassword) {
-      return res.status(401).json({
-        success: false,
-        message: "Email or password is incorrect."
-      });
-    }
-
-    setAuthSession(req, res, normalizedEmail, accountType);
-    res.json({ success: true, email: normalizedEmail });
-  } catch (error) {
-    console.error("Email/password sign-in failed:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Unable to sign in right now. Please try again later."
-    });
-  }
+app.post("/api/auth/password/login", (req, res) => {
+  res.status(410).json({
+    success: false,
+    message: "Email/password sign-in is no longer available. Use an email code instead."
+  });
 });
 
 app.post("/api/auth/password/request-reset", passwordResetRequestLimiter, async (req, res) => {
