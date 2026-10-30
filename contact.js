@@ -29,9 +29,11 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phonenumber').value.trim();
   const gender = document.getElementById('gender').value.trim();
-  const age = parseInt(document.getElementById('age').value.trim()) || null;
+  const age = parseInt(document.getElementById('age').value.trim(), 10) || null;
   const fitnessGoal = document.getElementById('goal').value;
+  const message = document.getElementById('message').value.trim();
   const statusMessage = document.getElementById('statusMessage');
+  const submitButton = form.querySelector('button[type="submit"]');
   
   // Validate required fields
   if (!name || !phone || !fitnessGoal) {
@@ -43,11 +45,12 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   try {
     statusMessage.textContent = 'Sending...';
     statusMessage.style.color = '#333';
+    submitButton.disabled = true;
     
-    const response = await fetch('http://localhost:3000/api/contact', {
+    const response = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, gender, age, fitnessGoal }),
+      body: JSON.stringify({ name, phone, gender, age, fitnessGoal, message }),
     });
 
     const data = await response.json();
@@ -57,13 +60,14 @@ document.querySelectorAll('.nav-links a').forEach(link => {
       statusMessage.style.color = 'green';
       form.reset();
     } else {
-      statusMessage.textContent = data.error || 'Something went wrong!';
+      statusMessage.textContent = data.message || data.error || 'Something went wrong!';
       statusMessage.style.color = 'red';
     }
   } catch (err) {
     statusMessage.textContent = 'Server connection failed! Please check if the server is running.';
     statusMessage.style.color = 'red';
     console.error(err);
+  } finally {
+    submitButton.disabled = false;
   }
 });
-
