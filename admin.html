@@ -34,7 +34,7 @@
     <div class="section" style="padding-top: 120px;">
         <div style="max-width: 95%; margin: 0 auto; padding: 20px;">
             <h1 style="text-align: center; color: hsl(223, 98%, 45%, 0.8); margin-bottom: 20px;">
-                <i class="fas fa-user-shield"></i> Admin Dashboard - User Management
+                <i class="fas fa-user-shield"></i>                 Admin Dashboard - Member & User Management
             </h1>
             
             <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
@@ -43,22 +43,32 @@
                     <p style="color: #666;"><strong>Account Type:</strong> Administrator | <strong>Access Level:</strong> Full Access</p>
                 </div>
 
+                <div class="admin-workspace">
+                    <aside class="admin-sidebar" aria-label="Admin data navigation">
+                        <h3><i class="fas fa-database"></i> Data Tables</h3>
+                        <button type="button" class="admin-sidebar-item active" id="userManagementNav">
+                            <i class="fas fa-users"></i> User Management
+                        </button>
+                        <div id="datasetNavigation"></div>
+                    </aside>
+
+                    <main class="admin-main-content">
                 <!-- Toolbar -->
                 <div class="admin-toolbar">
                     <div class="toolbar-left">
-                        <button onclick="saveChanges()" class="btn-primary">
+                        <button onclick="saveChanges()" class="btn-primary" id="saveChangesButton">
                             <i class="fas fa-save"></i> Save Changes
                         </button>
-                        <button onclick="downloadExcel()" class="btn-secondary">
+                        <button onclick="downloadExcel()" class="btn-secondary" id="downloadExcelButton">
                             <i class="fas fa-download"></i> Download Excel
                         </button>
-                        <button onclick="refreshData()" class="btn-secondary">
+                        <button onclick="refreshData()" class="btn-secondary" id="refreshDataButton">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
                     <div class="toolbar-right">
-                        <input type="text" id="searchInput" placeholder="Search..." class="search-input" onkeyup="handleSearch()">
-                        <button onclick="toggleRecentChanges()" class="btn-secondary">
+                        <input type="text" id="searchInput" placeholder="Search..." class="search-input" oninput="handleSearch()">
+                        <button onclick="toggleRecentChanges()" class="btn-secondary" id="recentChangesButton">
                             <i class="fas fa-history"></i> Recent Changes
                         </button>
                         <button onclick="logout()" class="btn-danger">
@@ -76,6 +86,48 @@
 
                 <!-- Excel-like Table Container -->
                 <div id="excelTable" style="margin-top: 20px;"></div>
+
+                <section id="datasetView" class="dataset-view" hidden>
+                    <div class="dataset-actions" id="datasetActions" hidden>
+                        <button type="button" class="btn-primary" id="addDatasetRow">
+                            <i class="fas fa-plus"></i> Add Row
+                        </button>
+                        <button type="button" class="btn-secondary" id="addDatasetColumn">
+                            <i class="fas fa-columns"></i> Add Column
+                        </button>
+                        <label for="deleteDatasetColumn">Column to delete:</label>
+                        <select id="deleteDatasetColumn"></select>
+                        <button type="button" class="btn-danger" id="removeDatasetColumn">
+                            <i class="fas fa-trash"></i> Delete Column
+                        </button>
+                        <span>Column changes apply to the entire collection.</span>
+                    </div>
+                    <div class="dataset-heading">
+                        <div>
+                            <h2 id="datasetTitle">Member data</h2>
+                            <p id="datasetSummary" aria-live="polite"></p>
+                            <p class="dataset-edit-help">Click a cell to edit it. Use the row and column controls to change MongoDB records and fields.</p>
+                        </div>
+                        <div class="dataset-pagination">
+                            <button type="button" class="btn-secondary" id="previousDatasetPage">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <span id="datasetPageStatus" aria-live="polite"></span>
+                            <button type="button" class="btn-secondary" id="nextDatasetPage">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="datasetTableWrapper" class="dataset-table-wrapper">
+                        <table class="dataset-table" id="datasetTable">
+                            <thead id="datasetTableHead"></thead>
+                            <tbody id="datasetTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                    </main>
+                </div>
 
                 <!-- Status Message -->
                 <div id="statusMessage" class="status-message"></div>
