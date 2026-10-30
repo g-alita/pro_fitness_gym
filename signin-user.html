@@ -9,107 +9,240 @@
 </head>
 <body>
   <div class="blur-overlay"></div>
-  <div class="container">
+  <div class="container user-signin-container">
     <div class="logo">
       <img src="photos/logo.png" alt="Pro Fitness Logo" style="width: 150px; height: auto;">
       <h1>Pro Fitness Gym</h1>
     </div>
     <h2><i class="fas fa-user"></i> SIGN IN AS USER</h2>
 
-    <form class="signin-form" id="userSignInForm">
-      <input type="email" id="userEmail" placeholder="Email address" autocomplete="email" required />
-
-      <div class="password-wrapper">
-        <input type="password" placeholder="Password" id="userPassword" autocomplete="current-password" minlength="8" maxlength="128" required />
-        <span class="toggle" onclick="togglePassword('userPassword')">
-          <i class="fas fa-eye" id="userPasswordToggle"></i>
-        </span>
+    <div class="signin-form admin-signin-form">
+      <div class="admin-login-tabs" role="tablist" aria-label="User sign-in method">
+        <button type="button" class="admin-login-tab active" id="userEmailTab" role="tab"
+          aria-selected="true" aria-controls="userEmailPanel">
+          <i class="fas fa-envelope"></i> Email
+        </button>
+        <button type="button" class="admin-login-tab" id="userPhoneTab" role="tab"
+          aria-selected="false" aria-controls="userPhonePanel">
+          <i class="fas fa-mobile-alt"></i> Phone
+        </button>
       </div>
 
-      <button type="submit">SIGN IN</button>
-      <p id="passwordSignInStatus" class="auth-status" role="status" aria-live="polite"></p>
+      <div class="admin-login-options">
+        <section class="admin-login-panel" id="userEmailPanel" role="tabpanel" aria-labelledby="userEmailTab">
+          <h3><i class="fas fa-envelope"></i> Email OTP sign in</h3>
+          <form id="userSignInForm">
+            <input type="email" id="userEmail" placeholder="Email address" autocomplete="email" required />
+            <button type="submit" id="requestEmailOtpButton">SEND SIGN-IN CODE</button>
+            <input type="text" id="userEmailOtp" placeholder="6-digit email code"
+              autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}"
+              minlength="6" maxlength="6" aria-label="Email sign-in code" hidden />
+            <button type="button" id="verifyUserEmailOtp" hidden>VERIFY CODE AND SIGN IN</button>
+            <p id="emailOtpStatus" class="auth-status" role="status" aria-live="polite"></p>
+          </form>
 
-      <div class="google-signin-section">
-        <div class="auth-divider"><span>OR</span></div>
-        <div id="googleSignInButton"></div>
-        <p id="googleSignInStatus" class="google-signin-status" role="status" aria-live="polite"></p>
+          <div class="google-signin-section">
+            <div class="auth-divider"><span>OR</span></div>
+            <div id="googleSignInButton"></div>
+            <p id="googleSignInStatus" class="google-signin-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="links">
+            <p>Don't have an account? <a href="contact.html">Sign up</a></p>
+          </div>
+        </section>
+
+        <section class="admin-login-panel" id="userPhonePanel" role="tabpanel" aria-labelledby="userPhoneTab" hidden>
+          <h3><i class="fas fa-mobile-alt"></i> Phone authenticator</h3>
+          <input type="tel" id="userPhone" placeholder="Phone (10 digits or +91XXXXXXXXXX)" autocomplete="tel"
+            inputmode="tel" pattern="(\+91)?[6-9][0-9]{9}" minlength="10" maxlength="13"
+            aria-label="User phone number" />
+          <input type="text" id="userPhoneTotp" placeholder="6-digit authenticator code"
+            autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}"
+            minlength="6" maxlength="6" aria-label="Authenticator code" />
+          <button type="button" id="verifyUserPhoneTotp">SIGN IN WITH AUTHENTICATOR</button>
+          <p id="userPhoneTotpStatus" class="auth-status" role="status" aria-live="polite"></p>
+          <p class="google-signin-status">Use the current code from your authenticator app. Only numbers in the user number collection can sign in.</p>
+          <details class="user-authenticator-setup">
+            <summary>Set up authenticator</summary>
+            <p>Enter the 10-digit number from the user number list, with or without +91.</p>
+            <button type="button" id="setupUserPhoneTotp">GENERATE AUTHENTICATOR KEY AND QR</button>
+            <p id="userTotpSetupStatus" class="auth-status" role="status" aria-live="polite"></p>
+            <div id="userTotpSetupDetails" hidden>
+              <p>Scan this QR code with your authenticator app, or enter the setup key manually:</p>
+              <img id="userTotpQr" class="authenticator-qr" alt="Authenticator setup QR code" />
+              <p><strong>12-character setup key:</strong> <code id="userTotpSetupKey"></code></p>
+              <p>Save the key securely. It is shown only once.</p>
+            </div>
+          </details>
+        </section>
       </div>
 
       <div class="links">
-        <button type="button" class="link-button" id="requestPasswordLink">Set up / forgot password?</button>
-        <p id="passwordSetupStatus" class="auth-status" role="status" aria-live="polite"></p>
-        <p>Don't have an account? <a href="contact.html">Sign up</a></p>
         <p><a href="gym.html"><i class="fas fa-home"></i> Back to Home</a></p>
       </div>
-    </form>
+    </div>
   </div>
 
   <script>
-    function togglePassword(inputId) {
-      const input = document.getElementById(inputId);
-      const toggle = document.getElementById(inputId + 'Toggle');
-      if (input.type === 'password') {
-        input.type = 'text';
-        toggle.classList.remove('fa-eye');
-        toggle.classList.add('fa-eye-slash');
-      } else {
-        input.type = 'password';
-        toggle.classList.remove('fa-eye-slash');
-        toggle.classList.add('fa-eye');
-      }
+    function showUserLoginPanel(method) {
+      const emailSelected = method === 'email';
+      document.getElementById('userEmailPanel').hidden = !emailSelected;
+      document.getElementById('userPhonePanel').hidden = emailSelected;
+      document.getElementById('userEmailTab').classList.toggle('active', emailSelected);
+      document.getElementById('userPhoneTab').classList.toggle('active', !emailSelected);
+      document.getElementById('userEmailTab').setAttribute('aria-selected', String(emailSelected));
+      document.getElementById('userPhoneTab').setAttribute('aria-selected', String(!emailSelected));
     }
+
+    document.getElementById('userEmailTab').addEventListener('click', function() {
+      showUserLoginPanel('email');
+    });
+
+    document.getElementById('userPhoneTab').addEventListener('click', function() {
+      showUserLoginPanel('phone');
+    });
 
     document.getElementById('userSignInForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('userEmail').value.trim();
-      const password = document.getElementById('userPassword').value;
-      const status = document.getElementById('passwordSignInStatus');
-      status.textContent = 'Signing in...';
+      const button = document.getElementById('requestEmailOtpButton');
+      const status = document.getElementById('emailOtpStatus');
+      status.textContent = 'Requesting a sign-in code...';
+      button.disabled = true;
 
       try {
-        const response = await fetch('/api/auth/password/login', {
+        const response = await fetch('/api/auth/email/user/request-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, accountType: 'user' })
+          body: JSON.stringify({ email })
         });
         const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.message || 'Sign-in failed.');
+          throw new Error(result.message || 'Unable to send a sign-in code.');
+        }
+
+        document.getElementById('userEmailOtp').hidden = false;
+        document.getElementById('verifyUserEmailOtp').hidden = false;
+        document.getElementById('userEmailOtp').focus();
+        status.textContent = result.message;
+      } catch (error) {
+        console.error('User email sign-in code request failed:', error);
+        status.textContent = error.message || 'Unable to send a sign-in code. Please try again.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById('verifyUserEmailOtp').addEventListener('click', async function() {
+      const email = document.getElementById('userEmail').value.trim();
+      const code = document.getElementById('userEmailOtp').value.trim();
+      const button = this;
+      const status = document.getElementById('emailOtpStatus');
+      status.textContent = 'Verifying sign-in code...';
+      button.disabled = true;
+
+      try {
+        const response = await fetch('/api/auth/email/user/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Sign-in code verification failed.');
         }
 
         localStorage.setItem('userLoggedIn', 'true');
         localStorage.setItem('userEmail', result.email);
+        localStorage.removeItem('userPhone');
         localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminEmail');
+        localStorage.removeItem('adminPhone');
         window.location.href = 'gym.html';
       } catch (error) {
-        console.error('User email/password sign-in failed:', error);
+        console.error('User email sign-in code verification failed:', error);
         status.textContent = error.message || 'Unable to sign in. Please try again.';
+      } finally {
+        button.disabled = false;
       }
     });
 
-    document.getElementById('requestPasswordLink').addEventListener('click', async function() {
-      const email = document.getElementById('userEmail').value.trim();
-      const status = document.getElementById('passwordSetupStatus');
-      if (!email) {
-        status.textContent = 'Enter your registered email address first.';
-        return;
+    document.getElementById('userEmailOtp').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('verifyUserEmailOtp').click();
       }
+    });
 
-      status.textContent = 'Requesting password setup email...';
+    document.getElementById('userPhoneTotp').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('verifyUserPhoneTotp').click();
+      }
+    });
+
+    document.getElementById('setupUserPhoneTotp').addEventListener('click', async function() {
+      const phone = document.getElementById('userPhone').value.trim();
+      const button = this;
+      const status = document.getElementById('userTotpSetupStatus');
+      status.textContent = 'Setting up authenticator...';
+      button.disabled = true;
+
       try {
-        const response = await fetch('/api/auth/password/request-reset', {
+        const response = await fetch('/api/auth/phone/user/setup-authenticator', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, accountType: 'user' })
+          body: JSON.stringify({ phone })
         });
         const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.message || 'Unable to request a password setup email.');
+          throw new Error(result.message || 'Unable to set up an authenticator.');
         }
-        status.textContent = result.message;
+
+        document.getElementById('userTotpSetupKey').textContent = result.secret;
+        document.getElementById('userTotpQr').src = result.qrCodeDataUrl;
+        document.getElementById('userTotpSetupDetails').hidden = false;
+        status.textContent = 'Authenticator configured. Scan the QR code or enter the setup key now.';
       } catch (error) {
-        console.error('User password setup request failed:', error);
-        status.textContent = error.message || 'Unable to request a password setup email.';
+        console.error('User authenticator setup failed:', error);
+        status.textContent = error.message || 'Unable to set up an authenticator.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById('verifyUserPhoneTotp').addEventListener('click', async function() {
+      const phone = document.getElementById('userPhone').value.trim();
+      const code = document.getElementById('userPhoneTotp').value.trim();
+      const button = this;
+      const status = document.getElementById('userPhoneTotpStatus');
+      status.textContent = 'Verifying authenticator code...';
+      button.disabled = true;
+
+      try {
+        const response = await fetch('/api/auth/phone/user/verify-totp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, code })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Authenticator sign-in failed.');
+        }
+
+        localStorage.setItem('userLoggedIn', 'true');
+        localStorage.setItem('userPhone', result.phone);
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminEmail');
+        localStorage.removeItem('adminPhone');
+        window.location.href = 'gym.html';
+      } catch (error) {
+        console.error('User authenticator sign-in failed:', error);
+        status.textContent = error.message || 'Authenticator sign-in failed. Please try again.';
+      } finally {
+        button.disabled = false;
       }
     });
 
@@ -141,6 +274,7 @@
 
         localStorage.setItem('userLoggedIn', 'true');
         localStorage.setItem('userEmail', result.email);
+        localStorage.removeItem('userPhone');
         localStorage.removeItem('adminLoggedIn');
         window.location.href = 'gym.html';
       } catch (error) {

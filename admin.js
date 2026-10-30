@@ -72,11 +72,16 @@ async function loadDatasetNavigation() {
             });
             navigation.appendChild(button);
         });
-        if (result.collections.length > 0 && !activeDataset) {
+        if (result.collections.length === 0) {
+            activeDataset = null;
+            document.getElementById('datasetView').hidden = true;
+            document.getElementById('datasetActions').hidden = true;
+            showStatus('No visible collections were found in the gym database.', 'info');
+        } else if (!activeDataset || !result.collections.some(
+            collection => collection.name === activeDataset.collection
+        )) {
             const firstCollection = result.collections[0];
             showDataset(firstCollection.name, firstCollection.label);
-        } else {
-            showStatus('No member collections were found in the gym database.', 'info');
         }
     } catch (error) {
         console.error('Error loading member collection navigation:', error);
@@ -749,11 +754,13 @@ function downloadExcel() {
 }
 
 // Refresh data from database
-function refreshData() {
+async function refreshData() {
     if (activeView === 'dataset') {
         if (!confirmDiscardDatasetEdits()) return;
-        loadDatasetPage(datasetPage);
+        await loadDatasetNavigation();
+        if (activeDataset) await loadDatasetPage(datasetPage);
     } else {
+        await loadDatasetNavigation();
         loadUsersData();
     }
 }
