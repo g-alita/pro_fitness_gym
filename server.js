@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 const { OAuth2Client } = require("google-auth-library");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const QRCode = require("qrcode");
 const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
 const DUMMY_PASSWORD_HASH = bcrypt.hashSync(crypto.randomBytes(32).toString("hex"), 12);
@@ -17,15 +18,47 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const googleOAuthClient = new OAuth2Client();
 const ADMIN_DATA_DATABASE_NAME = "profitnessgym";
-const ADMIN_DATA_COLLECTIONS = [
-  { name: "members sheet 1", label: "Members Sheet 1" },
-  { name: "members sheet 2", label: "Members Sheet 2" },
-  { name: "members sheet 3", label: "Members Sheet 3" },
-  { name: "evening", label: "Evening" },
-  { name: "morning", label: "Morning" }
-];
+const ADMIN_EMAIL_COLLECTION_NAME = "admin mail";
+const USER_EMAIL_COLLECTION_NAME = "user mail";
+const USER_PHONE_COLLECTION_NAME = "user number";
+const USER_PHONE_AUTHENTICATOR_COLLECTION_NAME = "user_phone_authenticators";
+const USER_EMAIL_OTP_COLLECTION_NAME = "user_email_login_otps";
+const ADMIN_HIDDEN_COLLECTIONS = new Set([
+  "admin_allowlist",
+  "passwordcredentials",
+  "passwordresettokens",
+  USER_PHONE_AUTHENTICATOR_COLLECTION_NAME,
+  "user_phone_enrollment_tokens",
+  USER_EMAIL_OTP_COLLECTION_NAME
+]);
+const ADMIN_DATASET_LABELS = {
+  "members sheet 1": "Members Sheet 1",
+  "members sheet 2": "Members Sheet 2",
+  "members sheet 3": "Members Sheet 3",
+  evening: "Evening",
+  morning: "Morning"
+};
 
-async function getAdminDatasetFields(collection) {
+async function getAdminDatasetCollections() {
+  const collections = await getGymDatabase().listCollections({}, { nameOnly: true }).toArray();
+  return collections
+    .map(({ name }) => name)
+    .filter((name) => !name.startsWith("system.") && !ADMIN_HIDDEN_COLLECTIONS.has(name))
+    .sort((left, right) => left.localeCompare(right))
+    .map((name) => ({
+      name,
+      label: ADMIN_DATASET_LABELS[name] ||
+        name.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
+    }));
+}
+
+async function getAdminDataset(name) {
+  if (typeof name !== "string") return null;
+  const collections = await getAdminDatasetCollections();
+  return collections.find((collection) => collection.name === name) || null;
+}
+
+async function getAdminDatasetFields(collection, collectionName) {
   const fields = await collection.aggregate([
     {
       $project: {
@@ -42,7 +75,11 @@ async function getAdminDatasetFields(collection) {
     { $group: { _id: "$fields" } },
     { $sort: { _id: 1 } }
   ]).toArray();
-  return fields.map(({ _id }) => _id).filter((field) => field !== "_id");
+  const fieldNames = fields.map(({ _id }) => _id).filter((field) => field !== "_id");
+  if (collectionName === USER_EMAIL_COLLECTION_NAME && !fieldNames.includes("MAIL")) {
+    fieldNames.push("MAIL");
+  }
+  return fieldNames;
 }
 const authSessionSecret = process.env.AUTH_SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 if (!process.env.AUTH_SESSION_SECRET) {
@@ -58,6 +95,47 @@ function getGoogleAdminEmails() {
 
 function isValidIndianMobile(phone) {
   return typeof phone === "string" && /^\+91[6-9]\d{9}$/.test(phone);
+}
+
+function normalizeIndianMobile(phone) {
+  if (typeof phone !== "string") return null;
+  const trimmedPhone = phone.trim();
+  const localNumber = /^\+91[6-9]\d{9}$/.test(trimmedPhone)
+    ? trimmedPhone.slice(3)
+    : /^[6-9]\d{9}$/.test(trimmedPhone)
+      ? trimmedPhone
+      : null;
+  return localNumber ? `+91${localNumber}` : null;
+}
+
+function getGymDatabase() {
+  return mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true }).db;
+}
+
+function getUserPhoneAuthenticatorCollection() {
+  return getGymDatabase().collection(USER_PHONE_AUTHENTICATOR_COLLECTION_NAME);
+}
+
+async function isEmailInAllowlist(collectionName, email) {
+  return Boolean(await getGymDatabase().collection(collectionName).findOne({
+    MAIL: new RegExp(`^${escapeRegex(email)}$`, "i")
+  }));
+}
+
+async function isUserPhoneAllowlisted(phone) {
+  const normalizedPhone = normalizeIndianMobile(phone);
+  if (!normalizedPhone) return false;
+  const localNumber = normalizedPhone.slice(3);
+  return Boolean(await getGymDatabase().collection(USER_PHONE_COLLECTION_NAME).findOne({
+    Number: {
+      $in: [
+        Number(localNumber),
+        localNumber,
+        normalizedPhone,
+        `91${localNumber}`
+      ]
+    }
+  }));
 }
 
 const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -188,8 +266,8 @@ function readAuthToken(req) {
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     const hasEmail = typeof data.email === "string" && data.email.length > 0;
-    const hasAdminPhone = data.role === "admin" && isValidIndianMobile(data.phone);
-    if ((!hasEmail && !hasAdminPhone) || !["user", "admin"].includes(data.role) ||
+    const hasRolePhone = ["admin", "user"].includes(data.role) && isValidIndianMobile(data.phone);
+    if ((!hasEmail && !hasRolePhone) || !["user", "admin"].includes(data.role) ||
         typeof data.expiresAt !== "number" || data.expiresAt <= Date.now()) {
       return null;
     }
@@ -211,20 +289,25 @@ function setAuthSession(req, res, email, role, phone) {
 
 async function isAccountAllowed(accountType, email) {
   if (accountType === "admin") {
-    return getGoogleAdminEmails().includes(email) || Boolean(await AdminAllowlist.exists({
-      email,
-      enabled: { $ne: false }
-    }));
+    const [listedByEmail, allowlisted] = await Promise.all([
+      isEmailInAllowlist(ADMIN_EMAIL_COLLECTION_NAME, email),
+      AdminAllowlist.exists({ email, enabled: { $ne: false } })
+    ]);
+    return getGoogleAdminEmails().includes(email) || Boolean(listedByEmail || allowlisted);
   }
 
-  return Boolean(await User.exists({
-    email: new RegExp(`^${escapeRegex(email)}$`, "i")
-  }));
+  return isEmailInAllowlist(USER_EMAIL_COLLECTION_NAME, email);
 }
 
 async function isAuthorizedAdminSession(session) {
   if (!session || session.role !== "admin") return false;
   if (session.email && getGoogleAdminEmails().includes(session.email.toLowerCase())) {
+    return true;
+  }
+  if (session.email && await isEmailInAllowlist(
+    ADMIN_EMAIL_COLLECTION_NAME,
+    session.email.toLowerCase()
+  )) {
     return true;
   }
   if (session.email && await AdminAllowlist.exists({
@@ -241,6 +324,20 @@ async function isAuthorizedAdminSession(session) {
     }));
   }
   return false;
+}
+
+async function isAuthorizedUserSession(session) {
+  if (!session || session.role !== "user") return false;
+  if (session.email) {
+    return isAccountAllowed("user", session.email.toLowerCase());
+  }
+  if (!session.phone || !await isUserPhoneAllowlisted(session.phone)) return false;
+  const authenticator = await getUserPhoneAuthenticatorCollection().findOne({
+    phone: session.phone,
+    enabled: { $ne: false },
+    secret: { $type: "string", $ne: "" }
+  });
+  return Boolean(authenticator);
 }
 
 const passwordLoginLimiter = rateLimit({
@@ -283,6 +380,38 @@ const adminTotpVerifyLimiter = rateLimit({
   message: { success: false, message: "Too many authenticator code attempts. Please try again later." }
 });
 
+const userTotpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many authenticator code attempts. Please try again later." }
+});
+
+const userEmailOtpRequestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many email code requests. Please try again later." }
+});
+
+const userEmailOtpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many email code attempts. Please try again later." }
+});
+
+const userTotpSetupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many authenticator setup attempts. Please try again later." }
+});
+
 // ===== Middleware =====
 app.use(cors());
 app.use(bodyParser.json());
@@ -300,7 +429,7 @@ app.use(async (req, res, next) => {
   if (isAdminPage && !(await isAuthorizedAdminSession(session))) {
     return res.redirect("/signin-admin.html");
   }
-  if (isUserPage && (!session || session.role !== "user")) {
+  if (isUserPage && !(await isAuthorizedUserSession(session))) {
     return res.redirect("/signin-user.html");
   }
   if (isUserManagementApi && !(await isAuthorizedAdminSession(session))) {
@@ -309,12 +438,11 @@ app.use(async (req, res, next) => {
   if (isAdminDatasetApi && !(await isAuthorizedAdminSession(session))) {
     return res.status(401).json({ success: false, message: "Admin sign-in is required." });
   }
-
   req.authSession = session;
   next();
 });
 
-// ===== Email/Password Authentication =====
+// ===== Email and Password Authentication =====
 app.post("/api/auth/logout", (req, res) => {
   res.clearCookie("pro_fitness_session", {
     httpOnly: true,
@@ -323,6 +451,168 @@ app.post("/api/auth/logout", (req, res) => {
     path: "/"
   });
   res.json({ success: true });
+});
+
+app.post("/api/auth/email/user/request-code", userEmailOtpRequestLimiter, async (req, res) => {
+  const { email } = req.body || {};
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ success: false, message: "Enter a valid email address." });
+  }
+
+  const appBaseUrl = process.env.APP_BASE_URL;
+  const transport = createSmtpTransport();
+  if (!appBaseUrl || !transport) {
+    return res.status(503).json({
+      success: false,
+      message: "Email sign-in is not configured. Please contact the gym."
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  let codeHash;
+  try {
+    const baseUrl = new URL(appBaseUrl);
+    if (!["http:", "https:"].includes(baseUrl.protocol)) {
+      throw new Error("APP_BASE_URL must use HTTP or HTTPS.");
+    }
+
+    if (!await isAccountAllowed("user", normalizedEmail)) {
+      return res.json({
+        success: true,
+        message: "If the email is on the user allowlist, a sign-in code will be sent."
+      });
+    }
+
+    const code = String(crypto.randomInt(100000, 1000000));
+    codeHash = crypto.createHmac("sha256", authSessionSecret)
+      .update(`${normalizedEmail}:${code}`)
+      .digest("hex");
+    const otpCollection = getGymDatabase().collection(USER_EMAIL_OTP_COLLECTION_NAME);
+    await otpCollection.createIndex({ email: 1 }, { unique: true });
+    await otpCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    const recentRequest = await otpCollection.findOne({
+      email: normalizedEmail,
+      createdAt: { $gt: new Date(Date.now() - 60 * 1000) }
+    });
+    if (recentRequest) {
+      return res.json({
+        success: true,
+        message: "If the email is on the user allowlist, a sign-in code will be sent."
+      });
+    }
+
+    await otpCollection.updateOne(
+      { email: normalizedEmail },
+      {
+        $set: {
+          codeHash,
+          attempts: 0,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+        }
+      },
+      { upsert: true }
+    );
+
+    const signInUrl = new URL("/signin-user.html", baseUrl);
+    await transport.sendMail({
+      from: process.env.SMTP_FROM,
+      to: normalizedEmail,
+      subject: "Your Pro Fitness Gym sign-in code",
+      text: `Your Pro Fitness Gym sign-in code is ${code}. It expires in 10 minutes. If you did not request this, you can ignore this email.\n\nSign in: ${signInUrl.toString()}`
+    });
+
+    res.json({
+      success: true,
+      message: "If the email is on the user allowlist, a sign-in code will be sent."
+    });
+  } catch (error) {
+    if (codeHash) {
+      try {
+        await getGymDatabase().collection(USER_EMAIL_OTP_COLLECTION_NAME)
+          .deleteOne({ email: normalizedEmail, codeHash });
+      } catch (cleanupError) {
+        console.error("Failed to remove unsent user email sign-in code:", cleanupError.message);
+      }
+    }
+    console.error("User email sign-in code request failed:", error.code || error.message);
+    const smtpDnsFailure = ["EDNS", "ENOTFOUND", "EAI_AGAIN"].includes(error.code);
+    res.status(smtpDnsFailure ? 503 : 500).json({
+      success: false,
+      message: smtpDnsFailure
+        ? "The email server could not be found. Please check the SMTP_HOST setting or contact the gym."
+        : "Unable to send a sign-in code right now. Please try again later."
+    });
+  }
+});
+
+app.post("/api/auth/email/user/verify-code", userEmailOtpVerifyLimiter, async (req, res) => {
+  const { email, code } = req.body || {};
+  if (!isValidEmail(email) || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter a valid email address and six-digit sign-in code."
+    });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  try {
+    if (!await isAccountAllowed("user", normalizedEmail)) {
+      return res.status(401).json({
+        success: false,
+        message: "The email or sign-in code is incorrect or expired."
+      });
+    }
+
+    const otpCollection = getGymDatabase().collection(USER_EMAIL_OTP_COLLECTION_NAME);
+    const otp = await otpCollection.findOne({
+      email: normalizedEmail,
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: 5 }
+    });
+    const codeHash = crypto.createHmac("sha256", authSessionSecret)
+      .update(`${normalizedEmail}:${code}`)
+      .digest("hex");
+    const storedHash = otp ? Buffer.from(otp.codeHash, "hex") : Buffer.alloc(0);
+    const candidateHash = Buffer.from(codeHash, "hex");
+    const hashMatches = storedHash.length === candidateHash.length &&
+      storedHash.length > 0 &&
+      crypto.timingSafeEqual(storedHash, candidateHash);
+    if (!otp || !hashMatches) {
+      if (otp) {
+        await otpCollection.updateOne(
+          { _id: otp._id, attempts: { $lt: 5 }, expiresAt: { $gt: new Date() } },
+          { $inc: { attempts: 1 } }
+        );
+      }
+      return res.status(401).json({
+        success: false,
+        message: "The email or sign-in code is incorrect or expired."
+      });
+    }
+
+    const consumed = await otpCollection.deleteOne({
+      _id: otp._id,
+      codeHash,
+      attempts: { $lt: 5 },
+      expiresAt: { $gt: new Date() }
+    });
+    if (consumed.deletedCount !== 1 || !await isAccountAllowed("user", normalizedEmail)) {
+      return res.status(401).json({
+        success: false,
+        message: "The email or sign-in code is incorrect or expired."
+      });
+    }
+
+    setAuthSession(req, res, normalizedEmail, "user");
+    res.json({ success: true, email: normalizedEmail });
+  } catch (error) {
+    console.error("User email sign-in code verification failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Unable to verify the sign-in code right now. Please try again later."
+    });
+  }
 });
 
 app.post("/api/auth/phone/admin/setup-authenticator", adminTotpSetupLimiter, async (req, res) => {
@@ -432,10 +722,125 @@ app.post("/api/auth/phone/admin/verify-totp", adminTotpVerifyLimiter, async (req
   }
 });
 
+app.post("/api/auth/phone/user/setup-authenticator", userTotpSetupLimiter, async (req, res) => {
+  const normalizedPhone = normalizeIndianMobile(req.body && req.body.phone);
+  if (!normalizedPhone) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter a valid 10-digit Indian mobile number, with or without the +91 prefix."
+    });
+  }
+  const phone = normalizedPhone;
+
+  try {
+    if (!await isUserPhoneAllowlisted(phone)) {
+      return res.status(403).json({
+        success: false,
+        message: "This number is not on the enabled user allowlist."
+      });
+    }
+
+    const authenticators = getUserPhoneAuthenticatorCollection();
+    await authenticators.createIndex({ phone: 1 }, { unique: true });
+    if (await authenticators.findOne({ phone, enabled: { $ne: false } })) {
+      return res.status(409).json({
+        success: false,
+        message: "An authenticator is already configured for this number. Contact the gym administrator."
+      });
+    }
+
+    const secret = encodeBase32(crypto.randomBytes(8)).slice(0, 12);
+    const label = encodeURIComponent(`Pro Fitness Gym User:${phone}`);
+    const issuer = encodeURIComponent("Pro Fitness Gym User");
+    const otpauthUrl =
+      `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+    await authenticators.insertOne({
+      phone,
+      secret,
+      enabled: true,
+      createdAt: new Date()
+    });
+
+    res.json({
+      success: true,
+      phone,
+      secret,
+      otpauthUrl,
+      qrCodeDataUrl
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "An authenticator is already configured for this number."
+      });
+    }
+    console.error("User authenticator setup failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Unable to set up a user authenticator right now. Please try again later."
+    });
+  }
+});
+
+app.post("/api/auth/phone/user/verify-totp", userTotpVerifyLimiter, async (req, res) => {
+  const { code } = req.body || {};
+  const phone = normalizeIndianMobile(req.body && req.body.phone);
+  if (!phone || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter a valid 10-digit Indian mobile number and six-digit authenticator code."
+    });
+  }
+
+  try {
+    if (!await isUserPhoneAllowlisted(phone)) {
+      return res.status(401).json({
+        success: false,
+        message: "The phone number or authenticator code is incorrect."
+      });
+    }
+    const authenticators = getUserPhoneAuthenticatorCollection();
+    const authenticator = await authenticators.findOne({
+      phone,
+      enabled: { $ne: false }
+    });
+    if (!authenticator || !verifyTotp(authenticator.secret, code)) {
+      return res.status(401).json({
+        success: false,
+        message: "The phone number or authenticator code is incorrect."
+      });
+    }
+
+    const stillAllowed = await isUserPhoneAllowlisted(phone) &&
+      await authenticators.findOne({
+        phone,
+        secret: authenticator.secret,
+        enabled: { $ne: false }
+      });
+    if (!stillAllowed) {
+      return res.status(401).json({
+        success: false,
+        message: "The phone number or authenticator code is incorrect."
+      });
+    }
+
+    setAuthSession(req, res, null, "user", phone);
+    res.json({ success: true, phone });
+  } catch (error) {
+    console.error("User authenticator verification failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Unable to verify the authenticator code right now. Please try again later."
+    });
+  }
+});
+
 app.post("/api/auth/password/login", passwordLoginLimiter, async (req, res) => {
   const { email, password, accountType } = req.body || {};
   if (!isValidEmail(email) || typeof password !== "string" ||
-      !["user", "admin"].includes(accountType)) {
+      accountType !== "admin") {
     return res.status(400).json({
       success: false,
       message: "Enter a valid email address and password."
@@ -473,7 +878,7 @@ app.post("/api/auth/password/login", passwordLoginLimiter, async (req, res) => {
 
 app.post("/api/auth/password/request-reset", passwordResetRequestLimiter, async (req, res) => {
   const { email, accountType } = req.body || {};
-  if (!isValidEmail(email) || !["user", "admin"].includes(accountType)) {
+  if (!isValidEmail(email) || accountType !== "admin") {
     return res.status(400).json({
       success: false,
       message: "Enter a valid email address."
@@ -550,6 +955,7 @@ app.post("/api/auth/password/reset", passwordResetLimiter, async (req, res) => {
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const reset = await PasswordResetToken.findOneAndDelete({
       tokenHash,
+      accountType: "admin",
       expiresAt: { $gt: new Date() }
     });
     if (!reset || !(await isAccountAllowed(reset.accountType, reset.email))) {
@@ -678,13 +1084,10 @@ app.post("/api/auth/google/user", async (req, res) => {
   }
 
   try {
-    const registeredUser = await User.exists({
-      email: new RegExp(`^${escapeRegex(email)}$`, "i")
-    });
-    if (!registeredUser) {
+    if (!(await isAccountAllowed("user", email.toLowerCase()))) {
       return res.status(403).json({
         success: false,
-        message: "This Google account is not on the registered user list. Please contact the gym."
+        message: "This Google account is not on the user email allowlist. Please contact the gym."
       });
     }
 
@@ -840,11 +1243,12 @@ app.post("/api/contact", async (req, res) => {
 app.get("/api/admin/datasets", async (req, res) => {
   try {
     const database = mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true });
-    const collections = await Promise.all(ADMIN_DATA_COLLECTIONS.map(async ({ name, label }) => {
+    const datasets = await getAdminDatasetCollections();
+    const collections = await Promise.all(datasets.map(async ({ name, label }) => {
       const collection = database.collection(name);
       const [count, fields] = await Promise.all([
         collection.countDocuments(),
-        getAdminDatasetFields(collection)
+        getAdminDatasetFields(collection, name)
       ]);
       return {
         name,
@@ -865,7 +1269,13 @@ app.get("/api/admin/datasets", async (req, res) => {
 });
 
 app.get("/api/admin/datasets/:collection", async (req, res) => {
-  const selected = ADMIN_DATA_COLLECTIONS.find(({ name }) => name === req.params.collection);
+  let selected;
+  try {
+    selected = await getAdminDataset(req.params.collection);
+  } catch (error) {
+    console.error("Error verifying admin dataset:", error.message);
+    return res.status(500).json({ success: false, message: "Unable to verify this dataset." });
+  }
   if (!selected) {
     return res.status(404).json({ success: false, message: "Dataset not found." });
   }
@@ -883,7 +1293,7 @@ app.get("/api/admin/datasets/:collection", async (req, res) => {
   try {
     const database = mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true });
     const collection = database.collection(selected.name);
-    const fields = await getAdminDatasetFields(collection);
+    const fields = await getAdminDatasetFields(collection, selected.name);
     const filter = search && fields.length > 0
       ? {
           $or: fields.map((field) => ({
@@ -930,7 +1340,13 @@ app.get("/api/admin/datasets/:collection", async (req, res) => {
 });
 
 app.put("/api/admin/datasets/:collection", async (req, res) => {
-  const selected = ADMIN_DATA_COLLECTIONS.find(({ name }) => name === req.params.collection);
+  let selected;
+  try {
+    selected = await getAdminDataset(req.params.collection);
+  } catch (error) {
+    console.error("Error verifying admin dataset:", error.message);
+    return res.status(500).json({ success: false, message: "Unable to verify this dataset." });
+  }
   if (!selected) {
     return res.status(404).json({ success: false, message: "Dataset not found." });
   }
@@ -1055,7 +1471,13 @@ app.put("/api/admin/datasets/:collection", async (req, res) => {
 });
 
 app.post("/api/admin/datasets/:collection/records", async (req, res) => {
-  const selected = ADMIN_DATA_COLLECTIONS.find(({ name }) => name === req.params.collection);
+  let selected;
+  try {
+    selected = await getAdminDataset(req.params.collection);
+  } catch (error) {
+    console.error("Error verifying admin dataset:", error.message);
+    return res.status(500).json({ success: false, message: "Unable to verify this dataset." });
+  }
   if (!selected) {
     return res.status(404).json({ success: false, message: "Dataset not found." });
   }
@@ -1068,7 +1490,7 @@ app.post("/api/admin/datasets/:collection/records", async (req, res) => {
   try {
     const database = mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true });
     const collection = database.collection(selected.name);
-    const fields = await getAdminDatasetFields(collection);
+    const fields = await getAdminDatasetFields(collection, selected.name);
     const record = {};
     for (const [field, value] of Object.entries(values)) {
       if (!fields.includes(field) || typeof value !== "string" || value.length > 10000) {
@@ -1093,7 +1515,13 @@ app.post("/api/admin/datasets/:collection/records", async (req, res) => {
 });
 
 app.delete("/api/admin/datasets/:collection/records/:id", async (req, res) => {
-  const selected = ADMIN_DATA_COLLECTIONS.find(({ name }) => name === req.params.collection);
+  let selected;
+  try {
+    selected = await getAdminDataset(req.params.collection);
+  } catch (error) {
+    console.error("Error verifying admin dataset:", error.message);
+    return res.status(500).json({ success: false, message: "Unable to verify this dataset." });
+  }
   if (!selected) {
     return res.status(404).json({ success: false, message: "Dataset not found." });
   }
@@ -1117,7 +1545,13 @@ app.delete("/api/admin/datasets/:collection/records/:id", async (req, res) => {
 });
 
 app.post("/api/admin/datasets/:collection/columns", async (req, res) => {
-  const selected = ADMIN_DATA_COLLECTIONS.find(({ name }) => name === req.params.collection);
+  let selected;
+  try {
+    selected = await getAdminDataset(req.params.collection);
+  } catch (error) {
+    console.error("Error verifying admin dataset:", error.message);
+    return res.status(500).json({ success: false, message: "Unable to verify this dataset." });
+  }
   if (!selected) {
     return res.status(404).json({ success: false, message: "Dataset not found." });
   }
@@ -1136,7 +1570,7 @@ app.post("/api/admin/datasets/:collection/columns", async (req, res) => {
   try {
     const database = mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true });
     const collection = database.collection(selected.name);
-    const fields = await getAdminDatasetFields(collection);
+    const fields = await getAdminDatasetFields(collection, selected.name);
     if (action === "add" && fields.includes(field)) {
       return res.status(409).json({ success: false, message: "That column already exists." });
     }
