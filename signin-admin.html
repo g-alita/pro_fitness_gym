@@ -42,22 +42,16 @@
 
       <div class="admin-login-options">
         <section class="admin-login-panel" id="emailLoginPanel" role="tabpanel" aria-labelledby="emailLoginTab">
-          <h3><i class="fas fa-envelope"></i> Email sign in</h3>
+          <h3><i class="fas fa-envelope"></i> Email OTP sign in</h3>
           <form id="adminSignInForm">
-            <input type="email" id="adminEmail" placeholder="Admin Email address" autocomplete="username" required />
-
-            <div class="password-wrapper">
-              <input type="password" placeholder="Admin Password" id="adminPassword" autocomplete="current-password" minlength="8" maxlength="128" required />
-              <span class="toggle" onclick="togglePassword('adminPassword')">
-                <i class="fas fa-eye" id="adminPasswordToggle"></i>
-              </span>
-            </div>
-
-            <button type="submit">SIGN IN</button>
-            <p id="passwordSignInStatus" class="auth-status" role="status" aria-live="polite"></p>
+            <input type="email" id="adminEmail" placeholder="Admin Email address" autocomplete="email" required />
+            <button type="submit" id="requestAdminEmailOtpButton">SEND SIGN-IN CODE</button>
+            <input type="text" id="adminEmailOtp" placeholder="6-digit email code"
+              autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}"
+              minlength="6" maxlength="6" aria-label="Email sign-in code" hidden />
+            <button type="button" id="verifyAdminEmailOtp" hidden>VERIFY CODE AND SIGN IN</button>
+            <p id="adminEmailOtpStatus" class="auth-status" role="status" aria-live="polite"></p>
           </form>
-          <button type="button" class="link-button" id="requestPasswordLink">Set up / forgot password?</button>
-          <p id="passwordSetupStatus" class="auth-status" role="status" aria-live="polite"></p>
         </section>
 
         <section class="admin-login-panel" id="phoneLoginPanel" role="tabpanel" aria-labelledby="phoneLoginTab" hidden>
@@ -121,20 +115,6 @@
   </div>
 
   <script>
-    function togglePassword(inputId) {
-      const input = document.getElementById(inputId);
-      const toggle = document.getElementById(inputId + 'Toggle');
-      if (input.type === 'password') {
-        input.type = 'text';
-        toggle.classList.remove('fa-eye');
-        toggle.classList.add('fa-eye-slash');
-      } else {
-        input.type = 'password';
-        toggle.classList.remove('fa-eye-slash');
-        toggle.classList.add('fa-eye');
-      }
-    }
-
     function showAdminLoginPanel(method) {
       const emailSelected = method === 'email';
       document.getElementById('emailLoginPanel').hidden = !emailSelected;
@@ -227,55 +207,72 @@
     document.getElementById('adminSignInForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('adminEmail').value.trim();
-      const password = document.getElementById('adminPassword').value;
-      const status = document.getElementById('passwordSignInStatus');
-      status.textContent = 'Signing in...';
+      const button = document.getElementById('requestAdminEmailOtpButton');
+      const status = document.getElementById('adminEmailOtpStatus');
+      status.textContent = 'Requesting a sign-in code...';
+      button.disabled = true;
 
       try {
-        const response = await fetch('/api/auth/password/login', {
+        const response = await fetch('/api/auth/email/admin/request-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, accountType: 'admin' })
+          body: JSON.stringify({ email })
         });
         const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.message || 'Sign-in failed.');
+          throw new Error(result.message || 'Unable to send a sign-in code.');
+        }
+
+        document.getElementById('adminEmailOtp').hidden = false;
+        document.getElementById('verifyAdminEmailOtp').hidden = false;
+        document.getElementById('adminEmailOtp').focus();
+        status.textContent = result.message;
+      } catch (error) {
+        console.error('Admin email sign-in code request failed:', error);
+        status.textContent = error.message || 'Unable to send a sign-in code. Please try again.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById('verifyAdminEmailOtp').addEventListener('click', async function() {
+      const email = document.getElementById('adminEmail').value.trim();
+      const code = document.getElementById('adminEmailOtp').value.trim();
+      const button = this;
+      const status = document.getElementById('adminEmailOtpStatus');
+      status.textContent = 'Verifying sign-in code...';
+      button.disabled = true;
+
+      try {
+        const response = await fetch('/api/auth/email/admin/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Sign-in code verification failed.');
         }
 
         localStorage.setItem('adminLoggedIn', 'true');
         localStorage.setItem('adminEmail', result.email);
         localStorage.removeItem('adminPhone');
         localStorage.removeItem('userLoggedIn');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userPhone');
         window.location.href = 'admin.html';
       } catch (error) {
-        console.error('Admin email/password sign-in failed:', error);
+        console.error('Admin email sign-in code verification failed:', error);
         status.textContent = error.message || 'Unable to sign in. Please try again.';
+      } finally {
+        button.disabled = false;
       }
     });
 
-    document.getElementById('requestPasswordLink').addEventListener('click', async function() {
-      const email = document.getElementById('adminEmail').value.trim();
-      const status = document.getElementById('passwordSetupStatus');
-      if (!email) {
-        status.textContent = 'Enter your admin email address first.';
-        return;
-      }
-
-      status.textContent = 'Requesting password setup email...';
-      try {
-        const response = await fetch('/api/auth/password/request-reset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, accountType: 'admin' })
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.message || 'Unable to request a password setup email.');
-        }
-        status.textContent = result.message;
-      } catch (error) {
-        console.error('Admin password setup request failed:', error);
-        status.textContent = error.message || 'Unable to request a password setup email.';
+    document.getElementById('adminEmailOtp').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('verifyAdminEmailOtp').click();
       }
     });
 
