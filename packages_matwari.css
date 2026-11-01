@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Pro Fitness Gym - services / pricing styles
+   Load AFTER gym.css (uses the --brand variable and base typography from it):
+     <link rel="stylesheet" href="gym.css">
+     <link rel="stylesheet" href="services.css">
+   ========================================================================== */
+
+/* ---- Layout ---- */
+.pricing-container,
+.platinum-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 25px;
+}
+
+.pricing-container {
+  margin-top: 30px;
+  font-family: "Baloo Bhai 2", cursive;
+}
+
+.platinum-container {
+  margin-top: 25px;
+}
+
+.platinum-Heading {
+  margin-top: 40px;
+  font-size: 1.8rem;
+  text-align: center;
+  color: var(--brand);
+}
+
+/* ---- Plan cards ---- */
+.card,
+.platinum-Card {
+  width: 250px;
+  padding: 20px;
+  background: linear-gradient(180deg, #fff, var(--brand));
+  border-radius: 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover,
+.platinum-Card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(53, 189, 242, 0.4);
+}
+
+.card h3,
+.platinum-Card h3 {
+  font-family: "Baloo Bhai 2", cursive;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.card h2,
+.platinum-Card h2 {
+  margin: 0 55px 10px 40px;
+  font-size: 1.5rem;
+  color: var(--brand);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  align-self: center;
+  padding: 12px 25px;
+  font-family: "Baloo Bhai 2", cursive;
+  font-size: 16px;
+  color: #fff;
+  background-color: var(--brand);
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #fff;
+  color: var(--brand);
+}
+
+.more-wrapper {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.more-card {
+  display: inline-block;
+  padding: 10px 25px;
+  font-family: "Baloo Bhai 2", cursive;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: var(--brand);
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.more-card:hover {
+  background-color: var(--brand-dark);
+}
+
+footer a {
+  font-family: "Baloo Bhai 2", cursive;
+  color: #000;
+  text-align: center;
+  text-decoration: none;
+}
+
+footer a:hover {
+  color: var(--brand);
+}
+
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .card,
+  .platinum-Card {
+    width: 80%;
+    max-width: 320px;
+  }
+}
