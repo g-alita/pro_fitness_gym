@@ -36,31 +36,31 @@
             <div class="card">
                 <h3>Daily Pass</h3>
                 <h2>₹ 100</h2>
-                <a href="contact.html"><button class="btn">Get Started</button></a>
+                <a href="contact.html?plan=daily"><button class="btn">Get Started</button></a>
             </div>
 
             <div class="card">
                 <h3>Monthly</h3>
                 <h2>₹ 2000</h2>
-                <a href="contact.html"><button class="btn">Get Started</button></a>
+                <a href="contact.html?plan=monthly"><button class="btn">Get Started</button></a>
             </div>
 
             <div class="card">
                 <h3>3 Months</h3>
                 <h2>₹ 4000</h2>
-                <a href="contact.html"><button class="btn">Get Started</button></a>
+                <a href="contact.html?plan=three-months"><button class="btn">Get Started</button></a>
             </div>
 
             <div class="card">
                 <h3>6 Months</h3>
                 <h2>₹ 7000</h2>
-                <a href="contact.html"><button class="btn">Get Started</button></a>
+                <a href="contact.html?plan=six-months"><button class="btn">Get Started</button></a>
             </div>
 
             <div class="card">
                 <h3>Annual</h3>
                 <h2>₹ 10000</h2>
-                <a href="contact.html"><button class="btn">Get Started</button></a>
+                <a href="contact.html?plan=annual"><button class="btn">Get Started</button></a>
             </div>
         </div>
 
@@ -77,18 +77,18 @@
     </div>
 
     <!-- footer -->
-    <footer id="footer" color: white; padding: 40px 20px; margin-top: 40px;>
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-around;">
+    <footer id="footer" class="packages-footer">
+        <div class="footer-content">
 
-            <div style="flex: 1 1 150px; margin: 20px; text-align: center;">
+            <div class="footer-contact">
                 <h4>Contact Us</h4>
-                <p><a href="mailto:profitnessgym11@gmail.com" style="color: #5c5c5c;">profitnessgym11@gmail.com</a>
+                <p><a href="mailto:profitnessgym26@gmail.com" style="color: #5c5c5c;">profitnessgym26@gmail.com</a>
                 </p>
-                <p>Phone: +91 9508128298</p>
+                <p>Phone: +91 9508128298 , +91 0654645503</p>
                 <p>Address: Pro Fitness Gym, Bhuian Tola, Matwari Opp. Gandhi Maidan, Hazaribagh-825301</p>
             </div>
 
-            <div style="flex: 1 1 150px; margin: 20px;">
+            <div class="footer-social">
                 <h4>Follow Us</h4>
 
                 <div class="socials">
@@ -100,11 +100,43 @@
             </div>
 
         </div>
-        <div style="text-align: center; margin-top: 20px; border-top: 1px solid #444; padding-top: 20px;">
+        <div class="footer-copyright">
             &copy; 2025 Pro Fitness Gym. All rights reserved.
         </div>
     </footer>
-    
+
+    <div class="chat-button" onclick="toggleChat()">
+        <i class="fas fa-comments"></i>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <h3><i class="fas fa-dumbbell"></i> Pro Fitness Assistant</h3>
+            <span class="close-btn" onclick="toggleChat()">×</span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    👋 Hi! I'm your Pro Fitness virtual assistant. How can I help you today?
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-options" id="quickOptions">
+            <button class="quick-btn" onclick="sendQuickMessage('membership')">Membership Plans</button>
+            <button class="quick-btn" onclick="sendQuickMessage('timings')">Gym Timings</button>
+            <button class="quick-btn" onclick="sendQuickMessage('trial')">Free Trial</button>
+            <button class="quick-btn" onclick="sendQuickMessage('location')">Location</button>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="chatbot.js"></script>
     <script src="gym.js"></script>
     <script src="auth.js"></script>
 </body>
