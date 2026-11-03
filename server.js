@@ -1117,7 +1117,16 @@ mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
+  .then(async () => {
+    console.log("✅ Connected to MongoDB Atlas");
+    try {
+      await Enquiry.createCollection();
+    } catch (error) {
+      if (error.code !== 48) {
+        console.error("Failed to create contact_query collection:", error.message);
+      }
+    }
+  })
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 // ===== Define Enquiry Schema & Model =====
@@ -1128,10 +1137,12 @@ const enquirySchema = new mongoose.Schema({
   age: Number,
   fitnessGoal: String,
   message: String,
+  membershipPlan: String,
   date: { type: Date, default: Date.now },
 });
 
-const Enquiry = mongoose.model("Enquiry", enquirySchema);
+const gymDatabaseConnection = mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true });
+const Enquiry = gymDatabaseConnection.model("Enquiry", enquirySchema, "contact_query");
 
 // ===== Define User Schema & Model =====
 const userSchema = new mongoose.Schema({
@@ -1226,25 +1237,17 @@ app.get("/signin-admin", (req, res) =>
 
 // ===== API Endpoint for Contact Form =====
 app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
-  const { name, phone, gender = "", age = null, fitnessGoal, message = "" } = req.body || {};
+  const { name, phone, gender = "", age = null, fitnessGoal, message = "", membershipPlan = "" } = req.body || {};
   if (typeof name !== "string" || !name.trim() || name.trim().length > 120 ||
       typeof phone !== "string" || !phone.trim() || phone.trim().length > 40 ||
       typeof gender !== "string" || gender.length > 40 ||
       (age !== null && (!Number.isInteger(age) || age < 1 || age > 120)) ||
       typeof fitnessGoal !== "string" || !fitnessGoal.trim() || fitnessGoal.length > 100 ||
-      typeof message !== "string" || message.length > 2000) {
+      typeof message !== "string" || message.length > 2000 ||
+      typeof membershipPlan !== "string" || membershipPlan.length > 100) {
     return res.status(400).json({
       success: false,
       message: "Please check your contact details and try again."
-    });
-  }
-
-  const transport = createSmtpTransport();
-  const contactEmail = process.env.CONTACT_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
-  if (!transport || !contactEmail) {
-    return res.status(503).json({
-      success: false,
-      message: "Contact email is not configured. Please contact the gym by phone."
     });
   }
 
@@ -1254,7 +1257,8 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
     gender: gender.trim(),
     age,
     fitnessGoal: fitnessGoal.trim(),
-    message: message.trim()
+    message: message.trim(),
+    membershipPlan: membershipPlan.trim()
   };
 
   try {
@@ -1264,6 +1268,15 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Unable to submit your enquiry right now. Please try again later."
+    });
+  }
+
+  const transport = createSmtpTransport();
+  const contactEmail = process.env.CONTACT_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
+  if (!transport || !contactEmail) {
+    return res.status(503).json({
+      success: false,
+      message: "Your enquiry was saved, but contact email is not configured. Please call the gym to confirm."
     });
   }
 
@@ -1280,6 +1293,7 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
         `Gender: ${enquiry.gender || "Not provided"}`,
         `Age: ${enquiry.age ?? "Not provided"}`,
         `Fitness goal: ${enquiry.fitnessGoal}`,
+        ...(enquiry.membershipPlan ? [`Selected membership plan: ${enquiry.membershipPlan}`] : []),
         `Message: ${enquiry.message || "Not provided"}`
       ].join("\n")
     });

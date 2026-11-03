@@ -32,6 +32,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   const age = parseInt(document.getElementById('age').value.trim(), 10) || null;
   const fitnessGoal = document.getElementById('goal').value;
   const message = document.getElementById('message').value.trim();
+  const membershipPlan = selectedMembershipPlan;
   const statusMessage = document.getElementById('statusMessage');
   const submitButton = form.querySelector('button[type="submit"]');
   
@@ -50,7 +51,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     const response = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, gender, age, fitnessGoal, message }),
+      body: JSON.stringify({ name, phone, gender, age, fitnessGoal, message, membershipPlan }),
     });
 
     const data = await response.json();
@@ -71,3 +72,17 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     submitButton.disabled = false;
   }
 });
+
+const membershipPlans = {
+  daily: 'Daily Pass - ₹100',
+  monthly: 'Monthly - ₹2000',
+  'three-months': '3 Months - ₹4000',
+  'six-months': '6 Months - ₹7000',
+  annual: 'Annual - ₹10000'
+};
+const requestedPlan = new URLSearchParams(window.location.search).get('plan');
+const selectedMembershipPlan = membershipPlans[requestedPlan] || '';
+if (selectedMembershipPlan) {
+  document.getElementById('selected-plan-value').textContent = selectedMembershipPlan;
+  document.getElementById('selected-plan-row').hidden = false;
+}

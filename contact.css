@@ -144,6 +144,24 @@ nav img {
     flex-direction: column;
 }
 
+.selected-plan-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #b9b8b8;
+    color: white;
+    text-align: left;
+}
+
+.selected-plan-row[hidden] {
+    display: none;
+}
+
 .contact-form input,
 .contact-form select {
     font-family: "baloo bhai 2", sans-serif;

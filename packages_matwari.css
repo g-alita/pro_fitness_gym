@@ -103,14 +103,44 @@
   background-color: var(--brand-dark);
 }
 
-footer a {
+.packages-footer {
+  margin-top: 40px;
+  padding: 40px 20px;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.footer-contact,
+.footer-social {
+  flex: 1 1 280px;
+  max-width: 500px;
+  text-align: center;
+}
+
+.packages-footer p {
+  margin: 10px 0 0;
+}
+
+.footer-copyright {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #444;
+  text-align: center;
+}
+
+.packages-footer a {
   font-family: "Baloo Bhai 2", cursive;
   color: #000;
   text-align: center;
   text-decoration: none;
 }
 
-footer a:hover {
+.packages-footer a:hover {
   color: var(--brand);
 }
 
