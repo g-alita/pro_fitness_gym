@@ -1,8 +1,8 @@
 // ===== Import Dependencies =====
-require("dotenv").config();
-const express = require("express");
 const path = require("path");
-const ProFitnessFAQ = require("./faq-data");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+const express = require("express");
+const ProFitnessFAQ = require("../frontend/faq-data");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -16,6 +16,7 @@ const rateLimit = require("express-rate-limit");
 // ===== App Setup =====
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FRONTEND_DIR = path.join(__dirname, "..", "frontend");
 const googleOAuthClient = new OAuth2Client();
 const ADMIN_DATA_DATABASE_NAME = "profitnessgym";
 const ADMIN_EMAIL_COLLECTION_NAME = "admin mail";
@@ -1224,34 +1225,37 @@ passwordResetTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 const PasswordResetToken = mongoose.model("PasswordResetToken", passwordResetTokenSchema);
 
 // ===== Static File Serving =====
-app.use(express.static(__dirname));
+app.use(express.static(FRONTEND_DIR));
 
 // ===== Routes for Pages =====
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "gym.html")));
-app.get("/gym", (req, res) => res.sendFile(path.join(__dirname, "gym.html")));
+app.get("/", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
+app.get("/gym", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
 app.get("/services", (req, res) =>
-  res.sendFile(path.join(__dirname, "services.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "services.html"))
 );
 app.get("/gallery", (req, res) =>
-  res.sendFile(path.join(__dirname, "gallery.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "gallery.html"))
 );
 app.get("/teams", (req, res) =>
-  res.sendFile(path.join(__dirname, "teams.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "teams.html"))
 );
 app.get("/contact", (req, res) =>
-  res.sendFile(path.join(__dirname, "contact.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "contact.html"))
+);
+app.get("/faq", (req, res) =>
+  res.sendFile(path.join(FRONTEND_DIR, "faq.html"))
 );
 app.get("/admin", (req, res) =>
-  res.sendFile(path.join(__dirname, "admin.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "admin.html"))
 );
 app.get("/profile", (req, res) =>
-  res.sendFile(path.join(__dirname, "profile.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "profile.html"))
 );
 app.get("/signin-user", (req, res) =>
-  res.sendFile(path.join(__dirname, "signin-user.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "signin-user.html"))
 );
 app.get("/signin-admin", (req, res) =>
-  res.sendFile(path.join(__dirname, "signin-admin.html"))
+  res.sendFile(path.join(FRONTEND_DIR, "signin-admin.html"))
 );
 
 // ===== API Endpoint for Contact Form =====
