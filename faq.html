@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frequently Asked Questions | Pro Fitness Gym</title>
+  <link rel="stylesheet" href="gym.css">
+  <link rel="stylesheet" href="faq.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+  <nav>
+    <span><img src="photos/logo.png" alt="pro_fitness_logo"></span>
+    <div class="hamburger" onclick="toggleMenu()">
+      <i class="fas fa-bars"></i>
+    </div>
+    <ul class="nav-links">
+      <a href="gym.html"><i class="fas fa-home"></i> Home</a>
+      <a href="teams.html"><i class="fas fa-users"></i> Our Team</a>
+      <a href="services.html"><i class="fas fa-dumbbell"></i> Services</a>
+      <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
+      <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+      <a href="faq.html" aria-current="page"><i class="fas fa-question-circle"></i> FAQ</a>
+    </ul>
+  </nav>
+
+  <main class="faq-page">
+    <section class="faq-hero">
+      <div class="faq-hero-content">
+        <p class="faq-eyebrow">PRO FITNESS SUPPORT</p>
+        <h1>How can we help?</h1>
+        <p>Search our frequently asked questions or browse by topic.</p>
+        <form id="faq-search-form" class="faq-search-form">
+          <label class="sr-only" for="faq-search">Search frequently asked questions</label>
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <input id="faq-search" name="question" type="search" maxlength="250"
+            placeholder="Ask us about memberships, timings, facilities..." required>
+          <button type="submit">Search</button>
+        </form>
+        <div class="faq-popular">
+          <span>Popular topics:</span>
+          <button type="button" data-faq-query="membership plans">Membership plans</button>
+          <button type="button" data-faq-query="gym timings">Gym timings</button>
+          <button type="button" data-faq-query="free trial">Free trial</button>
+          <button type="button" data-faq-query="location">Location</button>
+        </div>
+      </div>
+      <div class="faq-decoration faq-decoration-one" aria-hidden="true"><i class="fas fa-comments"></i></div>
+      <div class="faq-decoration faq-decoration-two" aria-hidden="true"><i class="fas fa-dumbbell"></i></div>
+    </section>
+
+    <section id="faq-answer" class="faq-answer" aria-live="polite" hidden>
+      <p class="faq-answer-label">SEARCH RESULT</p>
+      <h2 id="faq-answer-question"></h2>
+      <p id="faq-answer-text"></p>
+      <p id="faq-answer-contact" class="faq-answer-contact" hidden>
+        Need more help? <a href="contact.html">Contact us</a> and our team will be happy to help.
+      </p>
+    </section>
+
+    <section class="faq-topics">
+      <div class="faq-section-heading">
+        <p class="faq-eyebrow">FIND WHAT YOU NEED</p>
+        <h2>Browse by topic</h2>
+        <p>Choose a question to search for its answer.</p>
+      </div>
+      <div id="faq-categories" class="faq-categories"></div>
+    </section>
+
+    <section class="faq-help">
+      <div>
+        <h2>Still have a question?</h2>
+        <p>Send us a message and the Pro Fitness team will get back to you.</p>
+      </div>
+      <a href="contact.html">Contact Us <i class="fas fa-arrow-right"></i></a>
+    </section>
+  </main>
+
+  <footer class="faq-footer">
+    <p>&copy; 2025 Pro Fitness Gym. All rights reserved.</p>
+  </footer>
+
+  <script src="faq-data.js"></script>
+  <script src="faq.js"></script>
+</body>
+
+</html>

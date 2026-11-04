@@ -2,6 +2,7 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const ProFitnessFAQ = require("./faq-data");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -29,6 +30,13 @@ const contactSubmissionLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many contact submissions. Please try again later." }
+});
+const faqSearchLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many FAQ searches. Please try again later." }
 });
 const ADMIN_HIDDEN_COLLECTIONS = new Set([
   "admin_allowlist",
@@ -1131,6 +1139,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // ===== Define Enquiry Schema & Model =====
 const enquirySchema = new mongoose.Schema({
+  recordType: { type: String, enum: ["contact", "faq"], default: "contact" },
   name: String,
   phone: String,
   gender: String,
@@ -1138,8 +1147,18 @@ const enquirySchema = new mongoose.Schema({
   fitnessGoal: String,
   message: String,
   membershipPlan: String,
+  question: { type: String, maxlength: 250 },
+  normalizedQuestion: { type: String, maxlength: 250 },
+  answer: { type: String, maxlength: 2000 },
   date: { type: Date, default: Date.now },
 });
+enquirySchema.index(
+  { recordType: 1, normalizedQuestion: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { recordType: "faq", normalizedQuestion: { $type: "string" } }
+  }
+);
 
 const gymDatabaseConnection = mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true });
 const Enquiry = gymDatabaseConnection.model("Enquiry", enquirySchema, "contact_query");
@@ -1307,6 +1326,67 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
     res.status(502).json({
       success: false,
       message: "Your enquiry was saved, but the email could not be sent. Please call the gym to confirm."
+    });
+  }
+});
+
+app.post("/api/faq/search", faqSearchLimiter, async (req, res) => {
+  const question = req.body?.question;
+  if (typeof question !== "string" || !question.trim() || question.trim().length > 250) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter a question of 250 characters or fewer."
+    });
+  }
+
+  const trimmedQuestion = question.trim();
+  const normalizedQuestion = ProFitnessFAQ.normalizeQuestion(trimmedQuestion);
+  if (!normalizedQuestion) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter a question using letters or numbers."
+    });
+  }
+
+  if (Enquiry.db.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: "FAQ search is temporarily unavailable. Please try again later."
+    });
+  }
+
+  try {
+    const query = { recordType: "faq", normalizedQuestion };
+    const existing = await Enquiry.findOne(query).lean();
+    if (existing?.answer?.trim()) {
+      return res.json({ success: true, answer: existing.answer, source: "database" });
+    }
+
+    const faqEntry = ProFitnessFAQ.findEntry(trimmedQuestion);
+    const answer = faqEntry?.answer || "";
+    const savedQuestion = await Enquiry.findOneAndUpdate(
+      query,
+      {
+        $set: { answer },
+        $setOnInsert: {
+          recordType: "faq",
+          question: trimmedQuestion,
+          normalizedQuestion
+        }
+      },
+      { new: true, upsert: true, runValidators: true }
+    ).lean();
+
+    res.json({
+      success: true,
+      answer: savedQuestion.answer || null,
+      source: savedQuestion.answer ? (faqEntry ? "faq" : "database") : "none"
+    });
+  } catch (error) {
+    console.error("FAQ search failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Unable to search FAQs right now. Please try again later."
     });
   }
 });
