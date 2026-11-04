@@ -15,6 +15,7 @@ const rateLimit = require("express-rate-limit");
 
 // ===== App Setup =====
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const FRONTEND_DIR = path.join(__dirname, "..", "frontend");
 const googleOAuthClient = new OAuth2Client();
