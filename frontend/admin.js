@@ -13,7 +13,7 @@ let datasetOriginalRows = new Map();
 let datasetPendingEdits = new Map();
 let datasetAppliedSearch = '';
 let datasetFields = [];
-const API_BASE_URL = window.location.origin;
+const API_BASE_URL = (window.PRO_FITNESS_API_BASE_URL || window.location.origin).replace(/\/+$/, "");
 
 // Initialize the table when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -47,7 +47,7 @@ async function readDatasetApiResponse(response) {
 async function loadDatasetNavigation() {
     const navigation = document.getElementById('datasetNavigation');
     try {
-        const response = await fetch(`${API_BASE_URL}/api/admin/datasets`);
+        const response = await window.proFitnessApiFetch(`${API_BASE_URL}/api/admin/datasets`);
         const result = await readDatasetApiResponse(response);
         if (!response.ok || !result.success) {
             throw new Error(result.message || 'Unable to load member collections.');
@@ -179,7 +179,7 @@ async function addDatasetRow() {
     }
 
     try {
-        const response = await fetch(
+        const response = await window.proFitnessApiFetch(
             `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}/records`,
             {
                 method: 'POST',
@@ -211,7 +211,7 @@ async function handleDatasetRowAction(event) {
     if (!window.confirm('Delete this record from MongoDB? This cannot be undone.')) return;
 
     try {
-        const response = await fetch(
+        const response = await window.proFitnessApiFetch(
             `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}/records/${encodeURIComponent(recordId)}`,
             { method: 'DELETE' }
         );
@@ -259,7 +259,7 @@ async function removeDatasetColumn() {
 
 async function changeDatasetColumn(action, field) {
     try {
-        const response = await fetch(
+        const response = await window.proFitnessApiFetch(
             `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}/columns`,
             {
                 method: 'POST',
@@ -343,7 +343,7 @@ async function loadDatasetPage(page) {
     try {
         const params = new URLSearchParams({ page: String(page) });
         if (search) params.set('search', search);
-        const response = await fetch(
+        const response = await window.proFitnessApiFetch(
             `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}?${params}`,
             { signal: request.signal }
         );
@@ -454,7 +454,7 @@ async function loadDatasetPage(page) {
 async function loadUsersData() {
     try {
         showStatus('Loading users data...', 'info');
-        const response = await fetch(`${API_BASE_URL}/api/users`);
+        const response = await window.proFitnessApiFetch(`${API_BASE_URL}/api/users`);
         const data = await response.json();
         
         if (data.success) {
@@ -664,7 +664,7 @@ async function saveChanges() {
         });
 
         // Send updates to backend
-        const response = await fetch(`${API_BASE_URL}/api/users/bulk-update`, {
+        const response = await window.proFitnessApiFetch(`${API_BASE_URL}/api/users/bulk-update`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -702,7 +702,7 @@ async function saveDatasetChanges() {
     button.disabled = true;
     try {
         const updates = [...datasetPendingEdits.entries()].map(([id, fields]) => ({ id, fields }));
-        const response = await fetch(
+        const response = await window.proFitnessApiFetch(
             `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}`,
             {
                 method: 'PUT',
@@ -791,7 +791,7 @@ function handleSearch() {
 // Delete user from database
 async function deleteUserFromDB(userId) {
     try {
-        await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+        await window.proFitnessApiFetch(`${API_BASE_URL}/api/users/${userId}`, {
             method: 'DELETE'
         });
     } catch (error) {

@@ -9,9 +9,11 @@ const mongoose = require("mongoose");
 const { OAuth2Client } = require("google-auth-library");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const QRCode = require("qrcode");
 const nodemailer = require("nodemailer");
 const rateLimit = require("express-rate-limit");
+const { getContactEmail, isResendConfigured, sendEmail } = require("./email");
+const { sendEmailOtp, verifyEmailOtp } = require("./supabase-auth");
+const { isWhatsAppConfigured, sendWhatsAppOtp } = require("./whatsapp");
 
 // ===== App Setup =====
 const app = express();
@@ -24,6 +26,10 @@ const ADMIN_EMAIL_COLLECTION_NAME = "admin mail";
 const USER_EMAIL_COLLECTION_NAME = "user mail";
 const USER_PHONE_COLLECTION_NAME = "user number";
 const USER_PHONE_AUTHENTICATOR_COLLECTION_NAME = "user_phone_authenticators";
+const PHONE_LOGIN_OTP_COLLECTION_NAME = "phone_login_otps";
+const PHONE_OTP_LIFETIME_MS = 10 * 60 * 1000;
+const PHONE_OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+const PHONE_OTP_MAX_ATTEMPTS = 5;
 const USER_EMAIL_OTP_COLLECTION_NAME = "user_email_login_otps";
 const ADMIN_EMAIL_OTP_COLLECTION_NAME = "admin_email_login_otps";
 const contactSubmissionLimiter = rateLimit({
@@ -45,6 +51,7 @@ const ADMIN_HIDDEN_COLLECTIONS = new Set([
   "passwordcredentials",
   "passwordresettokens",
   USER_PHONE_AUTHENTICATOR_COLLECTION_NAME,
+  PHONE_LOGIN_OTP_COLLECTION_NAME,
   "user_phone_enrollment_tokens",
   USER_EMAIL_OTP_COLLECTION_NAME,
   ADMIN_EMAIL_OTP_COLLECTION_NAME
@@ -100,15 +107,9 @@ async function getAdminDatasetFields(collection, collectionName) {
   return fieldNames;
 }
 const authSessionSecret = process.env.AUTH_SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+const phoneOtpSecret = process.env.PHONE_OTP_SECRET || authSessionSecret;
 if (!process.env.AUTH_SESSION_SECRET) {
   console.warn("AUTH_SESSION_SECRET is unset; active sign-in sessions will expire when the server restarts.");
-}
-
-function getGoogleAdminEmails() {
-  return (process.env.GOOGLE_ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
 }
 
 function isValidIndianMobile(phone) {
@@ -128,10 +129,6 @@ function normalizeIndianMobile(phone) {
 
 function getGymDatabase() {
   return mongoose.connection.useDb(ADMIN_DATA_DATABASE_NAME, { useCache: true }).db;
-}
-
-function getUserPhoneAuthenticatorCollection() {
-  return getGymDatabase().collection(USER_PHONE_AUTHENTICATOR_COLLECTION_NAME);
 }
 
 async function isEmailInAllowlist(collectionName, email) {
@@ -156,70 +153,20 @@ async function isUserPhoneAllowlisted(phone) {
   }));
 }
 
-const BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-
-function encodeBase32(buffer) {
-  let value = 0;
-  let bits = 0;
-  let encoded = "";
-  for (const byte of buffer) {
-    value = (value << 8) | byte;
-    bits += 8;
-    while (bits >= 5) {
-      encoded += BASE32_ALPHABET[(value >>> (bits - 5)) & 31];
-      bits -= 5;
-    }
+async function isPhoneAllowlisted(role, phone) {
+  if (role === "admin") {
+    return Boolean(await AdminAllowlist.exists({
+      phone,
+      enabled: { $ne: false }
+    }));
   }
-  if (bits > 0) {
-    encoded += BASE32_ALPHABET[(value << (5 - bits)) & 31];
-  }
-  return encoded;
+  return isUserPhoneAllowlisted(phone);
 }
 
-function decodeBase32(secret) {
-  let value = 0;
-  let bits = 0;
-  const decoded = [];
-  for (const character of secret) {
-    const digit = BASE32_ALPHABET.indexOf(character);
-    if (digit === -1) return null;
-    value = (value << 5) | digit;
-    bits += 5;
-    if (bits >= 8) {
-      bits -= 8;
-      decoded.push((value >>> bits) & 255);
-      value &= (1 << bits) - 1;
-    }
-  }
-  return Buffer.from(decoded);
-}
-
-function verifyTotp(secret, code, now = Date.now()) {
-  const key = decodeBase32(secret);
-  if (!key || !/^\d{6}$/.test(code)) return false;
-
-  const currentStep = Math.floor(now / 30000);
-  let isValid = false;
-  for (let offset = -1; offset <= 1; offset++) {
-    const counter = Buffer.alloc(8);
-    counter.writeBigUInt64BE(BigInt(currentStep + offset));
-    const digest = crypto.createHmac("sha1", key).update(counter).digest();
-    const truncatedAt = digest[digest.length - 1] & 15;
-    const value = digest.readUInt32BE(truncatedAt) & 0x7fffffff;
-    const expected = String(value % 1000000).padStart(6, "0");
-    const matches = crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(code));
-    isValid = matches || isValid;
-  }
-  return isValid;
-}
-
-function isValidTotpSetupToken(candidate) {
-  const configuredToken = process.env.ADMIN_TOTP_SETUP_TOKEN;
-  if (!configuredToken || typeof candidate !== "string") return false;
-  const candidateBuffer = Buffer.from(candidate);
-  const configuredBuffer = Buffer.from(configuredToken);
-  return candidateBuffer.length === configuredBuffer.length &&
-    crypto.timingSafeEqual(candidateBuffer, configuredBuffer);
+function hashPhoneOtp(role, phone, code) {
+  return crypto.createHmac("sha256", phoneOtpSecret)
+    .update(`${role}:${phone}:${code}`)
+    .digest("hex");
 }
 
 function escapeRegex(value) {
@@ -296,10 +243,11 @@ function readAuthToken(req) {
 }
 
 function setAuthSession(req, res, email, role, phone) {
+  const crossOriginFrontend = Boolean(process.env.FRONTEND_ORIGIN);
   res.cookie("pro_fitness_session", createAuthToken(email, role, phone), {
     httpOnly: true,
-    secure: req.secure || process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: req.secure || process.env.NODE_ENV === "production" || crossOriginFrontend,
+    sameSite: crossOriginFrontend ? "none" : "lax",
     path: "/",
     maxAge: 8 * 60 * 60 * 1000
   });
@@ -311,7 +259,7 @@ async function isAccountAllowed(accountType, email) {
       isEmailInAllowlist(ADMIN_EMAIL_COLLECTION_NAME, email),
       AdminAllowlist.exists({ email, enabled: { $ne: false } })
     ]);
-    return getGoogleAdminEmails().includes(email) || Boolean(listedByEmail || allowlisted);
+    return Boolean(listedByEmail || allowlisted);
   }
 
   return isEmailInAllowlist(USER_EMAIL_COLLECTION_NAME, email);
@@ -319,9 +267,6 @@ async function isAccountAllowed(accountType, email) {
 
 async function isAuthorizedAdminSession(session) {
   if (!session || session.role !== "admin") return false;
-  if (session.email && getGoogleAdminEmails().includes(session.email.toLowerCase())) {
-    return true;
-  }
   if (session.email && await isEmailInAllowlist(
     ADMIN_EMAIL_COLLECTION_NAME,
     session.email.toLowerCase()
@@ -337,8 +282,7 @@ async function isAuthorizedAdminSession(session) {
   if (session.phone && isValidIndianMobile(session.phone)) {
     return Boolean(await AdminAllowlist.exists({
       phone: session.phone,
-      enabled: { $ne: false },
-      totpSecret: { $type: "string", $ne: "" }
+      enabled: { $ne: false }
     }));
   }
   return false;
@@ -349,13 +293,7 @@ async function isAuthorizedUserSession(session) {
   if (session.email) {
     return isAccountAllowed("user", session.email.toLowerCase());
   }
-  if (!session.phone || !await isUserPhoneAllowlisted(session.phone)) return false;
-  const authenticator = await getUserPhoneAuthenticatorCollection().findOne({
-    phone: session.phone,
-    enabled: { $ne: false },
-    secret: { $type: "string", $ne: "" }
-  });
-  return Boolean(authenticator);
+  return Boolean(session.phone && await isUserPhoneAllowlisted(session.phone));
 }
 
 const passwordResetRequestLimiter = rateLimit({
@@ -374,28 +312,20 @@ const passwordResetLimiter = rateLimit({
   message: { success: false, message: "Too many password reset attempts. Please try again later." }
 });
 
-const adminTotpSetupLimiter = rateLimit({
+const phoneOtpRequestLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  limit: 5,
+  limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many authenticator setup attempts. Please try again later." }
+  message: { success: false, message: "Too many WhatsApp code requests. Please try again later." }
 });
 
-const adminTotpVerifyLimiter = rateLimit({
+const phoneOtpVerifyLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many authenticator code attempts. Please try again later." }
-});
-
-const userTotpVerifyLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: "Too many authenticator code attempts. Please try again later." }
+  message: { success: false, message: "Too many WhatsApp code attempts. Please try again later." }
 });
 
 const userEmailOtpRequestLimiter = rateLimit({
@@ -430,16 +360,23 @@ const adminEmailOtpVerifyLimiter = rateLimit({
   message: { success: false, message: "Too many email code attempts. Please try again later." }
 });
 
-const userTotpSetupLimiter = rateLimit({
+const googleLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many authenticator setup attempts. Please try again later." }
+  message: { success: false, message: "Too many Google sign-in attempts. Please try again later." }
 });
 
 // ===== Middleware =====
-app.use(cors());
+const frontendOrigins = (process.env.FRONTEND_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+app.use(cors({
+  origin: (origin, callback) => callback(null, !origin || frontendOrigins.includes(origin)),
+  credentials: true
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -470,39 +407,26 @@ app.use(async (req, res, next) => {
 
 // ===== Email and Password Authentication =====
 app.post("/api/auth/logout", (req, res) => {
+  const crossOriginFrontend = Boolean(process.env.FRONTEND_ORIGIN);
   res.clearCookie("pro_fitness_session", {
     httpOnly: true,
-    secure: req.secure || process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: req.secure || process.env.NODE_ENV === "production" || crossOriginFrontend,
+    sameSite: crossOriginFrontend ? "none" : "lax",
     path: "/"
   });
   res.json({ success: true });
 });
 
-function createEmailOtpRequestHandler(accountType, collectionName, signInPage) {
+function createEmailOtpRequestHandler(accountType) {
   return async (req, res) => {
     const { email } = req.body || {};
     if (!isValidEmail(email)) {
       return res.status(400).json({ success: false, message: "Enter a valid email address." });
     }
 
-    const appBaseUrl = process.env.APP_BASE_URL;
-    const transport = createSmtpTransport();
-    if (!appBaseUrl || !transport) {
-      return res.status(503).json({
-        success: false,
-        message: "Email sign-in is not configured. Please contact the gym."
-      });
-    }
-
     const normalizedEmail = email.trim().toLowerCase();
-    let codeHash;
     try {
-      const baseUrl = new URL(appBaseUrl);
-      if (!["http:", "https:"].includes(baseUrl.protocol)) {
-        throw new Error("APP_BASE_URL must use HTTP or HTTPS.");
-      }
-
+      await connectToMongoDB();
       if (!await isAccountAllowed(accountType, normalizedEmail)) {
         return res.json({
           success: true,
@@ -510,71 +434,28 @@ function createEmailOtpRequestHandler(accountType, collectionName, signInPage) {
         });
       }
 
-      const otpCollection = getGymDatabase().collection(collectionName);
-      await otpCollection.createIndex({ email: 1 }, { unique: true });
-      await otpCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-      const recentRequest = await otpCollection.findOne({
-        email: normalizedEmail,
-        createdAt: { $gt: new Date(Date.now() - 60 * 1000) }
-      });
-      if (recentRequest) {
-        return res.json({
-          success: true,
-          message: "If the email belongs to an authorized account, a sign-in code will be sent."
-        });
-      }
-
-      const code = String(crypto.randomInt(100000, 1000000));
-      codeHash = crypto.createHmac("sha256", authSessionSecret)
-        .update(`${normalizedEmail}:${code}`)
-        .digest("hex");
-      await otpCollection.updateOne(
-        { email: normalizedEmail },
-        {
-          $set: {
-            codeHash,
-            attempts: 0,
-            createdAt: new Date(),
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000)
-          }
-        },
-        { upsert: true }
-      );
-
-      const signInUrl = new URL(signInPage, baseUrl);
-      await transport.sendMail({
-        from: process.env.SMTP_FROM,
-        to: normalizedEmail,
-        subject: "Your Pro Fitness Gym sign-in code",
-        text: `Your Pro Fitness Gym sign-in code is ${code}. It expires in 10 minutes. If you did not request this, you can ignore this email.\n\nSign in: ${signInUrl.toString()}`
-      });
+      await sendEmailOtp(normalizedEmail);
 
       res.json({
         success: true,
         message: "If the email belongs to an authorized account, a sign-in code will be sent."
       });
     } catch (error) {
-      if (codeHash) {
-        try {
-          await getGymDatabase().collection(collectionName)
-            .deleteOne({ email: normalizedEmail, codeHash });
-        } catch (cleanupError) {
-          console.error(`Failed to remove unsent ${accountType} email sign-in code:`, cleanupError.message);
-        }
-      }
-      console.error(`${accountType} email sign-in code request failed:`, error.code || error.message);
-      const smtpDnsFailure = ["EDNS", "ENOTFOUND", "EAI_AGAIN"].includes(error.code);
-      res.status(smtpDnsFailure ? 503 : 500).json({
+      console.error(
+        `${accountType} Supabase email sign-in request failed:`,
+        error.status || error.code || error.message
+      );
+      res.status(error.status === 429 ? 429 : 503).json({
         success: false,
-        message: smtpDnsFailure
-          ? "The email server could not be found. Please check the SMTP_HOST setting or contact the gym."
+        message: error.status === 429
+          ? "Too many sign-in code requests. Please try again later."
           : "Unable to send a sign-in code right now. Please try again later."
       });
     }
   };
 }
 
-function createEmailOtpVerifyHandler(accountType, collectionName) {
+function createEmailOtpVerifyHandler(accountType) {
   return async (req, res) => {
     const { email, code } = req.body || {};
     if (!isValidEmail(email) || typeof code !== "string" || !/^\d{6}$/.test(code)) {
@@ -586,6 +467,7 @@ function createEmailOtpVerifyHandler(accountType, collectionName) {
 
     const normalizedEmail = email.trim().toLowerCase();
     try {
+      await connectToMongoDB();
       if (!await isAccountAllowed(accountType, normalizedEmail)) {
         return res.status(401).json({
           success: false,
@@ -593,40 +475,10 @@ function createEmailOtpVerifyHandler(accountType, collectionName) {
         });
       }
 
-      const otpCollection = getGymDatabase().collection(collectionName);
-      const otp = await otpCollection.findOne({
-        email: normalizedEmail,
-        expiresAt: { $gt: new Date() },
-        attempts: { $lt: 5 }
-      });
-      const codeHash = crypto.createHmac("sha256", authSessionSecret)
-        .update(`${normalizedEmail}:${code}`)
-        .digest("hex");
-      const storedHash = otp ? Buffer.from(otp.codeHash, "hex") : Buffer.alloc(0);
-      const candidateHash = Buffer.from(codeHash, "hex");
-      const hashMatches = storedHash.length === candidateHash.length &&
-        storedHash.length > 0 &&
-        crypto.timingSafeEqual(storedHash, candidateHash);
-      if (!otp || !hashMatches) {
-        if (otp) {
-          await otpCollection.updateOne(
-            { _id: otp._id, attempts: { $lt: 5 }, expiresAt: { $gt: new Date() } },
-            { $inc: { attempts: 1 } }
-          );
-        }
-        return res.status(401).json({
-          success: false,
-          message: "The email or sign-in code is incorrect or expired."
-        });
-      }
-
-      const consumed = await otpCollection.deleteOne({
-        _id: otp._id,
-        codeHash,
-        attempts: { $lt: 5 },
-        expiresAt: { $gt: new Date() }
-      });
-      if (consumed.deletedCount !== 1 || !await isAccountAllowed(accountType, normalizedEmail)) {
+      const { user } = await verifyEmailOtp(normalizedEmail, code);
+      const verifiedEmail = user?.email?.trim().toLowerCase();
+      if (verifiedEmail !== normalizedEmail ||
+          !await isAccountAllowed(accountType, normalizedEmail)) {
         return res.status(401).json({
           success: false,
           message: "The email or sign-in code is incorrect or expired."
@@ -636,10 +488,16 @@ function createEmailOtpVerifyHandler(accountType, collectionName) {
       setAuthSession(req, res, normalizedEmail, accountType);
       res.json({ success: true, email: normalizedEmail });
     } catch (error) {
-      console.error(`${accountType} email sign-in code verification failed:`, error.message);
-      res.status(500).json({
+      const invalidCode = [400, 401, 403, 422].includes(error.status);
+      console.error(
+        `${accountType} Supabase email sign-in verification failed:`,
+        error.status || error.code || error.message
+      );
+      res.status(invalidCode ? 401 : 503).json({
         success: false,
-        message: "Unable to verify the sign-in code right now. Please try again later."
+        message: invalidCode
+          ? "The email or sign-in code is incorrect or expired."
+          : "Unable to verify the sign-in code right now. Please try again later."
       });
     }
   };
@@ -648,242 +506,162 @@ function createEmailOtpVerifyHandler(accountType, collectionName) {
 app.post(
   "/api/auth/email/user/request-code",
   userEmailOtpRequestLimiter,
-  createEmailOtpRequestHandler("user", USER_EMAIL_OTP_COLLECTION_NAME, "/signin-user.html")
+  createEmailOtpRequestHandler("user")
 );
 app.post(
   "/api/auth/email/user/verify-code",
   userEmailOtpVerifyLimiter,
-  createEmailOtpVerifyHandler("user", USER_EMAIL_OTP_COLLECTION_NAME)
+  createEmailOtpVerifyHandler("user")
 );
 app.post(
   "/api/auth/email/admin/request-code",
   adminEmailOtpRequestLimiter,
-  createEmailOtpRequestHandler("admin", ADMIN_EMAIL_OTP_COLLECTION_NAME, "/signin-admin.html")
+  createEmailOtpRequestHandler("admin")
 );
 app.post(
   "/api/auth/email/admin/verify-code",
   adminEmailOtpVerifyLimiter,
-  createEmailOtpVerifyHandler("admin", ADMIN_EMAIL_OTP_COLLECTION_NAME)
+  createEmailOtpVerifyHandler("admin")
 );
 
-app.post("/api/auth/phone/admin/setup-authenticator", adminTotpSetupLimiter, async (req, res) => {
-  const { phone, setupToken } = req.body || {};
-  if (!isValidIndianMobile(phone)) {
-    return res.status(400).json({
-      success: false,
-      message: "Enter a valid Indian mobile number in +91XXXXXXXXXX format."
-    });
-  }
-  if (!isValidTotpSetupToken(setupToken)) {
-    return res.status(403).json({
-      success: false,
-      message: "Authenticator setup is not authorized."
-    });
-  }
+async function getPhoneOtpCollection() {
+  const collection = getGymDatabase().collection(PHONE_LOGIN_OTP_COLLECTION_NAME);
+  await collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  return collection;
+}
 
-  try {
-    const secret = encodeBase32(crypto.randomBytes(20));
-    const admin = await AdminAllowlist.findOneAndUpdate(
-      {
-        phone,
-        enabled: { $ne: false },
-        $or: [{ totpSecret: { $exists: false } }, { totpSecret: "" }]
-      },
-      { $set: { totpSecret: secret } },
-      { new: true, runValidators: true }
-    );
-    if (!admin) {
-      const isAllowed = await AdminAllowlist.exists({
-        phone,
-        enabled: { $ne: false }
-      });
-      return res.status(isAllowed ? 409 : 404).json({
-        success: false,
-        message: isAllowed
-          ? "An authenticator is already configured for this number."
-          : "This phone number is not on the enabled admin allowlist."
-      });
-    }
-
-    const label = encodeURIComponent(`Pro Fitness Gym:${phone}`);
-    const issuer = encodeURIComponent("Pro Fitness Gym");
-    res.json({
-      success: true,
-      phone,
-      secret,
-      otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`
-    });
-  } catch (error) {
-    console.error("Admin authenticator setup failed:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Unable to set up an authenticator right now. Please try again later."
-    });
-  }
-});
-
-app.post("/api/auth/phone/admin/verify-totp", adminTotpVerifyLimiter, async (req, res) => {
-  const { phone, code } = req.body || {};
-  if (!isValidIndianMobile(phone) || typeof code !== "string" || !/^\d{6}$/.test(code)) {
-    return res.status(400).json({
-      success: false,
-      message: "Enter a valid Indian mobile number and six-digit authenticator code."
-    });
-  }
-
-  try {
-    const admin = await AdminAllowlist.findOne({
-      phone,
-      enabled: { $ne: false }
-    }).select("phone +totpSecret");
-    if (!admin || !admin.totpSecret) {
-      return res.status(401).json({
-        success: false,
-        message: "This number is not enabled for authenticator sign-in."
-      });
-    }
-
-    if (!verifyTotp(admin.totpSecret, code)) {
-      return res.status(401).json({
-        success: false,
-        message: "The phone number or authenticator code is incorrect."
-      });
-    }
-
-    const stillAllowed = await AdminAllowlist.exists({
-      phone,
-      enabled: { $ne: false },
-      totpSecret: admin.totpSecret
-    });
-    if (!stillAllowed) {
-      return res.status(401).json({
-        success: false,
-        message: "The phone number or authenticator code is incorrect."
-      });
-    }
-
-    setAuthSession(req, res, null, "admin", phone);
-    res.json({ success: true, phone });
-  } catch (error) {
-    console.error("Admin authenticator verification failed:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Unable to verify the authenticator code right now. Please try again later."
-    });
-  }
-});
-
-app.post("/api/auth/phone/user/setup-authenticator", userTotpSetupLimiter, async (req, res) => {
-  const normalizedPhone = normalizeIndianMobile(req.body && req.body.phone);
-  if (!normalizedPhone) {
+app.post("/api/auth/phone/:role/request-code", phoneOtpRequestLimiter, async (req, res) => {
+  const { role } = req.params;
+  const phone = normalizeIndianMobile(req.body && req.body.phone);
+  if (!["user", "admin"].includes(role) || !phone) {
     return res.status(400).json({
       success: false,
       message: "Enter a valid 10-digit Indian mobile number, with or without the +91 prefix."
     });
   }
-  const phone = normalizedPhone;
 
+  const genericResponse = {
+    success: true,
+    message: "If this number is on the allowlist, a sign-in code has been sent via WhatsApp."
+  };
   try {
-    if (!await isUserPhoneAllowlisted(phone)) {
-      return res.status(403).json({
+    if (!await isPhoneAllowlisted(role, phone)) {
+      return res.json(genericResponse);
+    }
+    if (!isWhatsAppConfigured()) {
+      return res.status(503).json({
         success: false,
-        message: "This number is not on the enabled user allowlist."
+        message: "WhatsApp sign-in is temporarily unavailable. Please try again later."
       });
     }
 
-    const authenticators = getUserPhoneAuthenticatorCollection();
-    await authenticators.createIndex({ phone: 1 }, { unique: true });
-    if (await authenticators.findOne({ phone, enabled: { $ne: false } })) {
-      return res.status(409).json({
-        success: false,
-        message: "An authenticator is already configured for this number. Contact the gym administrator."
-      });
+    const now = new Date();
+    const otpCollection = await getPhoneOtpCollection();
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+    const codeHash = hashPhoneOtp(role, phone, code);
+    try {
+      await otpCollection.findOneAndUpdate(
+        {
+          _id: `${role}:${phone}`,
+          createdAt: { $lte: new Date(now.getTime() - PHONE_OTP_RESEND_COOLDOWN_MS) }
+        },
+        {
+          $set: {
+            phone,
+            role,
+            codeHash,
+            createdAt: now,
+            expiresAt: new Date(now.getTime() + PHONE_OTP_LIFETIME_MS),
+            attempts: 0
+          }
+        },
+        { upsert: true, returnDocument: "after" }
+      );
+    } catch (error) {
+      if (error.code === 11000) return res.json(genericResponse);
+      throw error;
     }
 
-    const secret = encodeBase32(crypto.randomBytes(8)).slice(0, 12);
-    const label = encodeURIComponent(`Pro Fitness Gym User:${phone}`);
-    const issuer = encodeURIComponent("Pro Fitness Gym User");
-    const otpauthUrl =
-      `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
-    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
-    await authenticators.insertOne({
-      phone,
-      secret,
-      enabled: true,
-      createdAt: new Date()
-    });
-
-    res.json({
-      success: true,
-      phone,
-      secret,
-      otpauthUrl,
-      qrCodeDataUrl
-    });
+    try {
+      await sendWhatsAppOtp(phone, code);
+    } catch (error) {
+      console.error("WhatsApp OTP delivery failed:", {
+        status: error.status,
+        providerCode: error.providerCode,
+        code: error.code
+      });
+      return res.status(502).json({
+        success: false,
+        message: "Unable to send a WhatsApp sign-in code right now. Please try again later."
+      });
+    }
+    return res.json(genericResponse);
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "An authenticator is already configured for this number."
-      });
-    }
-    console.error("User authenticator setup failed:", error.message);
-    res.status(500).json({
+    console.error("WhatsApp OTP request failed:", error.message);
+    return res.status(500).json({
       success: false,
-      message: "Unable to set up a user authenticator right now. Please try again later."
+      message: "Unable to request a WhatsApp sign-in code right now. Please try again later."
     });
   }
 });
 
-app.post("/api/auth/phone/user/verify-totp", userTotpVerifyLimiter, async (req, res) => {
-  const { code } = req.body || {};
+app.post("/api/auth/phone/:role/verify-code", phoneOtpVerifyLimiter, async (req, res) => {
+  const { role } = req.params;
   const phone = normalizeIndianMobile(req.body && req.body.phone);
-  if (!phone || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+  const code = req.body && req.body.code;
+  if (!["user", "admin"].includes(role) || !phone || typeof code !== "string" || !/^\d{6}$/.test(code)) {
     return res.status(400).json({
       success: false,
-      message: "Enter a valid 10-digit Indian mobile number and six-digit authenticator code."
+      message: "Enter a valid phone number and six-digit WhatsApp code."
     });
   }
 
   try {
-    if (!await isUserPhoneAllowlisted(phone)) {
-      return res.status(401).json({
-        success: false,
-        message: "The phone number or authenticator code is incorrect."
-      });
-    }
-    const authenticators = getUserPhoneAuthenticatorCollection();
-    const authenticator = await authenticators.findOne({
-      phone,
-      enabled: { $ne: false }
+    const otpCollection = await getPhoneOtpCollection();
+    const otpId = `${role}:${phone}`;
+    const otp = await otpCollection.findOne({
+      _id: otpId,
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: PHONE_OTP_MAX_ATTEMPTS }
     });
-    if (!authenticator || !verifyTotp(authenticator.secret, code)) {
+    const candidateHash = hashPhoneOtp(role, phone, code);
+    const storedHash = typeof otp?.codeHash === "string" && /^[a-f0-9]{64}$/.test(otp.codeHash)
+      ? Buffer.from(otp.codeHash, "hex")
+      : null;
+    const candidateHashBytes = Buffer.from(candidateHash, "hex");
+    const hashMatches = Boolean(storedHash) &&
+      crypto.timingSafeEqual(storedHash, candidateHashBytes);
+    if (!otp || !hashMatches) {
+      await otpCollection.updateOne(
+        { _id: otpId, expiresAt: { $gt: new Date() }, attempts: { $lt: PHONE_OTP_MAX_ATTEMPTS } },
+        { $inc: { attempts: 1 } }
+      );
       return res.status(401).json({
         success: false,
-        message: "The phone number or authenticator code is incorrect."
+        message: "The phone number or WhatsApp code is incorrect or expired."
       });
     }
 
-    const stillAllowed = await isUserPhoneAllowlisted(phone) &&
-      await authenticators.findOne({
-        phone,
-        secret: authenticator.secret,
-        enabled: { $ne: false }
-      });
-    if (!stillAllowed) {
+    const consumed = await otpCollection.deleteOne({
+      _id: otpId,
+      codeHash: candidateHash,
+      expiresAt: { $gt: new Date() },
+      attempts: { $lt: PHONE_OTP_MAX_ATTEMPTS }
+    });
+    if (consumed.deletedCount !== 1 || !await isPhoneAllowlisted(role, phone)) {
       return res.status(401).json({
         success: false,
-        message: "The phone number or authenticator code is incorrect."
+        message: "The phone number or WhatsApp code is incorrect or expired."
       });
     }
 
-    setAuthSession(req, res, null, "user", phone);
-    res.json({ success: true, phone });
+    setAuthSession(req, res, null, role, phone);
+    return res.json({ success: true, phone });
   } catch (error) {
-    console.error("User authenticator verification failed:", error.message);
-    res.status(500).json({
+    console.error("WhatsApp OTP verification failed:", error.message);
+    return res.status(500).json({
       success: false,
-      message: "Unable to verify the authenticator code right now. Please try again later."
+      message: "Unable to verify the WhatsApp code right now. Please try again later."
     });
   }
 });
@@ -1000,7 +778,6 @@ app.post("/api/auth/password/reset", passwordResetLimiter, async (req, res) => {
   }
 });
 
-// ===== Google Admin Sign-In =====
 app.get("/api/auth/google/config", (req, res) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) {
@@ -1013,58 +790,10 @@ app.get("/api/auth/google/config", (req, res) => {
   res.json({ clientId });
 });
 
-app.post("/api/auth/google/admin", async (req, res) => {
+app.post("/api/auth/google/:role", googleLoginLimiter, async (req, res) => {
+  const { credential } = req.body || {};
+  const { role } = req.params;
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const credential = req.body && req.body.credential;
-
-  if (!clientId) {
-    return res.status(503).json({
-      success: false,
-      message: "Google admin sign-in is not configured on the server."
-    });
-  }
-  if (typeof credential !== "string" || credential.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "A Google credential is required."
-    });
-  }
-
-  try {
-    const ticket = await googleOAuthClient.verifyIdToken({
-      idToken: credential,
-      audience: clientId
-    });
-    const payload = ticket.getPayload();
-    const email = payload && payload.email;
-
-    if (!email || payload.email_verified !== true) {
-      return res.status(401).json({
-        success: false,
-        message: "Use a Google account with a verified email address."
-      });
-    }
-    if (!(await isAccountAllowed("admin", email.toLowerCase()))) {
-      return res.status(403).json({
-        success: false,
-        message: "This Google account is not authorized for admin access."
-      });
-    }
-
-    setAuthSession(req, res, email.toLowerCase(), "admin");
-    res.json({ success: true, email });
-  } catch (error) {
-    console.error("Google ID token verification failed:", error.message);
-    res.status(401).json({
-      success: false,
-      message: "Google account could not be verified. Please try again."
-    });
-  }
-});
-
-app.post("/api/auth/google/user", async (req, res) => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const credential = req.body && req.body.credential;
 
   if (!clientId) {
     return res.status(503).json({
@@ -1072,10 +801,11 @@ app.post("/api/auth/google/user", async (req, res) => {
       message: "Google sign-in is not configured on the server."
     });
   }
-  if (typeof credential !== "string" || credential.length === 0) {
+  if (typeof credential !== "string" || !credential || credential.length > 8192 ||
+      !["user", "admin"].includes(role)) {
     return res.status(400).json({
       success: false,
-      message: "A Google credential is required."
+      message: "A valid Google sign-in credential is required."
     });
   }
 
@@ -1086,16 +816,15 @@ app.post("/api/auth/google/user", async (req, res) => {
       audience: clientId
     });
     const payload = ticket.getPayload();
-    email = payload && payload.email;
-
-    if (!email || payload.email_verified !== true) {
+    email = payload?.email?.trim().toLowerCase();
+    if (!email || payload?.email_verified !== true) {
       return res.status(401).json({
         success: false,
         message: "Use a Google account with a verified email address."
       });
     }
   } catch (error) {
-    console.error("Google user ID token verification failed:", error.message);
+    console.error("Google ID token verification failed:", error.message);
     return res.status(401).json({
       success: false,
       message: "Google account could not be verified. Please try again."
@@ -1103,41 +832,57 @@ app.post("/api/auth/google/user", async (req, res) => {
   }
 
   try {
-    if (!(await isAccountAllowed("user", email.toLowerCase()))) {
+    await connectToMongoDB();
+    if (!await isAccountAllowed(role, email)) {
       return res.status(403).json({
         success: false,
-        message: "This Google account is not on the user email allowlist. Please contact the gym."
+        message: role === "admin"
+          ? "This Google account is not authorized for admin access."
+          : "This Google account is not authorized for user access."
       });
     }
 
-    setAuthSession(req, res, email.toLowerCase(), "user");
+    setAuthSession(req, res, email, role);
     res.json({ success: true, email });
   } catch (error) {
-    console.error("Google user sign-in failed:", error.message);
-    res.status(500).json({
+    console.error("Google account allowlist lookup failed:", error.message);
+    res.status(503).json({
       success: false,
-      message: "Unable to verify your user account right now. Please try again later."
+      message: "Unable to verify your allowlist access right now. Please try again."
     });
   }
 });
 
 // ===== MongoDB Connection =====
-// Replace the connection string below with your Atlas URI from MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(async () => {
-    console.log("✅ Connected to MongoDB Atlas");
-    try {
-      await Enquiry.createCollection();
-    } catch (error) {
-      if (error.code !== 48) {
-        console.error("Failed to create contact_query collection:", error.message);
-      }
+let mongoConnectionPromise;
+mongoose.connection.on("disconnected", () => {
+  mongoConnectionPromise = null;
+});
+
+async function connectToMongoDB() {
+  if (mongoose.connection.readyState === 1) return;
+  if (!mongoConnectionPromise) {
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is not configured.");
     }
-  })
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+    mongoConnectionPromise = mongoose.connect(process.env.MONGO_URI)
+      .then(async () => {
+        console.log("✅ Connected to MongoDB Atlas");
+        try {
+          await Enquiry.createCollection();
+        } catch (error) {
+          if (error.code !== 48) {
+            console.error("Failed to create contact_query collection:", error.message);
+          }
+        }
+      })
+      .catch((error) => {
+        mongoConnectionPromise = null;
+        throw error;
+      });
+  }
+  await mongoConnectionPromise;
+}
 
 // ===== Define Enquiry Schema & Model =====
 const enquirySchema = new mongoose.Schema({
@@ -1195,7 +940,6 @@ const adminAllowlistSchema = new mongoose.Schema({
     type: String,
     match: /^\+91[6-9]\d{9}$/
   },
-  totpSecret: { type: String, select: false },
   enabled: { type: Boolean, default: true }
 }, { collection: "admin_allowlist" });
 adminAllowlistSchema.index(
@@ -1286,6 +1030,7 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
   };
 
   try {
+    await connectToMongoDB();
     await new Enquiry(enquiry).save();
   } catch (error) {
     console.error("Failed to save contact form enquiry:", error.message);
@@ -1295,18 +1040,17 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
     });
   }
 
-  const transport = createSmtpTransport();
-  const contactEmail = process.env.CONTACT_EMAIL || process.env.SMTP_USER || process.env.SMTP_FROM;
-  if (!transport || !contactEmail) {
+  const contactEmail = getContactEmail();
+  if (!isResendConfigured() || !contactEmail) {
     return res.status(503).json({
       success: false,
-      message: "Your enquiry was saved, but contact email is not configured. Please call the gym to confirm."
+      saved: true,
+      message: "Your enquiry was saved, but Resend email is not configured. Please call the gym to confirm."
     });
   }
 
   try {
-    await transport.sendMail({
-      from: process.env.SMTP_FROM,
+    await sendEmail({
       to: contactEmail,
       subject: `New gym enquiry from ${enquiry.name}`,
       text: [
@@ -1327,9 +1071,10 @@ app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
       message: "Thank you! Your enquiry was sent successfully. We'll contact you soon."
     });
   } catch (error) {
-    console.error("Contact form processing failed:", error.code || error.message);
+    console.error("Contact form email delivery failed:", error.message);
     res.status(502).json({
       success: false,
+      saved: true,
       message: "Your enquiry was saved, but the email could not be sent. Please call the gym to confirm."
     });
   }
@@ -1848,6 +1593,13 @@ app.delete("/api/users/:id", async (req, res) => {
 });
 
 // ===== Start Server =====
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  connectToMongoDB().catch((error) => {
+    console.error("❌ MongoDB Connection Error:", error.message);
+  });
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
+
+module.exports = { app, connectToMongoDB };
