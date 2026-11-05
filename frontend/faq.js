@@ -73,7 +73,7 @@ async function searchFAQ(question) {
   faqAnswerSection.scrollIntoView({ behavior: "smooth", block: "center" });
 
   try {
-    const response = await fetch("/api/faq/search", {
+    const response = await window.proFitnessApiFetch('/api/faq/search', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: trimmedQuestion })

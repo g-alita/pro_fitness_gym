@@ -65,6 +65,7 @@
         </div>
     </div>
 
+    <script src="api-config.js"></script>
     <script src="gym.js"></script>
     <script src="auth.js"></script>
     <script>
@@ -84,7 +85,7 @@
 
         async function logout() {
             try {
-                await fetch('/api/auth/logout', { method: 'POST' });
+                await window.proFitnessApiFetch('/api/auth/logout', { method: 'POST' });
             } catch (error) {
                 console.error('Unable to end user session:', error);
             }

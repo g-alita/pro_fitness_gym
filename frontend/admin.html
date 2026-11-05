@@ -141,6 +141,7 @@
     <!-- SheetJS for Excel export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
+    <script src="api-config.js"></script>
     <script src="gym.js"></script>
     <script src="auth.js"></script>
     <script src="admin.js"></script>
@@ -158,7 +159,7 @@
 
         async function logout() {
             try {
-                await fetch('/api/auth/logout', { method: 'POST' });
+                await window.proFitnessApiFetch('/api/auth/logout', { method: 'POST' });
             } catch (error) {
                 console.error('Unable to end admin session:', error);
             }

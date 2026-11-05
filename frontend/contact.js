@@ -48,7 +48,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     statusMessage.style.color = '#333';
     submitButton.disabled = true;
     
-    const response = await fetch('/api/contact', {
+    const response = await window.proFitnessApiFetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, phone, gender, age, fitnessGoal, message, membershipPlan }),
