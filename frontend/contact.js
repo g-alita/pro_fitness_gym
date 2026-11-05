@@ -23,11 +23,13 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   }
 
   const form = document.getElementById('contact-form'); // assign form id
+  const apiBaseUrl = (window.PRO_FITNESS_API_BASE_URL || '').replace(/\/+$/, '');
   form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phonenumber').value.trim();
+  const email = document.getElementById('email').value.trim();
   const gender = document.getElementById('gender').value.trim();
   const age = parseInt(document.getElementById('age').value.trim(), 10) || null;
   const fitnessGoal = document.getElementById('goal').value;
@@ -48,10 +50,10 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     statusMessage.style.color = '#333';
     submitButton.disabled = true;
     
-    const response = await fetch('/api/contact', {
+    const response = await fetch(`${apiBaseUrl}/api/contact`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, gender, age, fitnessGoal, message, membershipPlan }),
+      body: JSON.stringify({ name, phone, email, gender, age, fitnessGoal, message, membershipPlan }),
     });
 
     const data = await response.json();
@@ -60,12 +62,18 @@ document.querySelectorAll('.nav-links a').forEach(link => {
       statusMessage.textContent = data.message;
       statusMessage.style.color = 'green';
       form.reset();
+    } else if (data.saved) {
+      statusMessage.textContent = data.message || 'Your enquiry was saved, but its email notification could not be sent.';
+      statusMessage.style.color = '#a66b00';
+      form.reset();
     } else {
       statusMessage.textContent = data.message || data.error || 'Something went wrong!';
       statusMessage.style.color = 'red';
     }
   } catch (err) {
-    statusMessage.textContent = 'Server connection failed! Please check if the server is running.';
+    statusMessage.textContent = window.location.protocol === 'file:'
+      ? 'Cannot reach the contact service. Start the backend with "npm start" and open http://localhost:3000/contact.'
+      : 'Cannot reach the contact service. Please try again later.';
     statusMessage.style.color = 'red';
     console.error(err);
   } finally {

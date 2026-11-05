@@ -137,52 +137,6 @@ nav.scrolled img {
   z-index: 1001;
 }
 
-/* Sign-in dropdown */
-.signin-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.signin-dropdown > a {
-  cursor: pointer;
-}
-
-.signin-dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  min-width: 200px;
-  margin-top: 10px;
-  background-color: rgba(30, 30, 30, 0.98);
-  border-radius: 8px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  z-index: 1002;
-}
-
-.signin-dropdown-content a {
-  display: block;
-  padding: 12px 16px;
-  color: var(--brand);
-  text-decoration: none;
-  border-bottom: 1px solid rgba(53, 189, 242, 0.2);
-  transition: background-color 0.3s ease;
-}
-
-.signin-dropdown-content a:last-child {
-  border-bottom: none;
-}
-
-.signin-dropdown-content a:hover {
-  background-color: rgba(53, 189, 242, 0.1);
-  color: hsl(223 98% 45%);
-}
-
-.signin-dropdown.show .signin-dropdown-content {
-  display: block;
-}
-
-
 /* ==========================================================================
    3. HERO
    ========================================================================== */
@@ -703,18 +657,6 @@ footer a:hover {
     width: 100%;
     padding: 15px 10px;
     border-bottom: 1px solid rgba(53, 189, 242, 0.2);
-  }
-
-  .signin-dropdown-content {
-    position: static;
-    width: 100%;
-    margin-top: 0;
-    background-color: transparent;
-    box-shadow: none;
-  }
-
-  .signin-dropdown-content a {
-    padding: 15px 10px;
   }
 
   /* Hero */

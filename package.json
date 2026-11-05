@@ -18,16 +18,12 @@
   },
   "homepage": "https://github.com/g-alita/pro_fitness_gym#readme",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.7.1",
-    "google-auth-library": "^10.9.1",
-    "mongoose": "^8.19.2",
-    "nodemailer": "^10.2.1",
-    "qrcode": "^1.5.4"
+    "mongoose": "^8.19.2"
   },
   "description": ""
 }
