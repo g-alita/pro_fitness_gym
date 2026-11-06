@@ -51,6 +51,7 @@
         }
 
         if (isAdmin) {
+          sessionStorage.removeItem('adminGoogleAccessToken');
           localStorage.setItem('adminLoggedIn', 'true');
           localStorage.setItem('adminPhone', result.phone);
           localStorage.removeItem('adminEmail');
