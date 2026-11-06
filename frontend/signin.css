@@ -152,6 +152,35 @@ button:hover {
   justify-content: center;
 }
 
+.google-admin-signin-button {
+  display: inline-flex;
+  min-width: 220px;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  background: #fff;
+  color: #3c4043;
+  font: 500 14px Arial, sans-serif;
+  cursor: pointer;
+}
+
+.google-admin-signin-button:hover {
+  background: #f8faff;
+  border-color: #c6dafc;
+}
+
+.google-signin-guidance {
+  margin-top: 8px;
+  color: #555;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .admin-login-tabs {
   display: flex;
   width: 100%;

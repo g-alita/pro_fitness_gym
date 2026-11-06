@@ -90,6 +90,7 @@
         <div class="auth-divider"><span>OR</span></div>
         <div id="googleSignInButton" class="google-signin-button"></div>
         <p id="googleSignInStatus" class="google-signin-status" role="status" aria-live="polite"></p>
+        <p class="google-signin-guidance">Google sign-in also grants spreadsheet access so your sheets load automatically in the admin page.</p>
       </div>
 
       <div class="links">
@@ -173,6 +174,7 @@
 
         localStorage.setItem('adminLoggedIn', 'true');
         localStorage.setItem('adminEmail', result.email);
+        sessionStorage.removeItem('adminGoogleAccessToken');
         localStorage.removeItem('adminPhone');
         localStorage.removeItem('userLoggedIn');
         localStorage.removeItem('userEmail');

@@ -1,879 +1,839 @@
-// Admin Dashboard - Excel-like User Management
+const DRIVE_API = "https://www.googleapis.com/drive/v3";
+const SHEETS_API = "https://sheets.googleapis.com/v4";
+const USER_INFO_API = "https://openidconnect.googleapis.com/v1/userinfo";
+const ROWS_PER_PAGE = 50;
+const COLUMNS_PER_PAGE = 16;
 
-let hot; // Handsontable instance
-let usersData = [];
-let recentChanges = [];
-let activeView = 'users';
-let activeDataset = null;
-let datasetPage = 1;
-let datasetTotalPages = 1;
-let datasetSearchTimer;
-let activeDatasetRequest;
-let datasetOriginalRows = new Map();
-let datasetPendingEdits = new Map();
-let datasetAppliedSearch = '';
-let datasetFields = [];
-const API_BASE_URL = (window.PRO_FITNESS_API_BASE_URL || window.location.origin).replace(/\/+$/, "");
+const state = {
+  adminEmail: null,
+  accessToken: null,
+  spreadsheets: [],
+  nextPageToken: null,
+  activeSpreadsheet: null,
+  activeSheet: null,
+  sheets: [],
+  rowCount: 0,
+  columnCount: 0,
+  rowPage: 0,
+  columnPage: 0,
+  gridValues: [],
+  pendingEdits: new Map(),
+  gridRequest: 0,
+  spreadsheetRequest: 0,
+  isSaving: false,
+  statusTimer: null
+};
 
-// Initialize the table when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadRecentChanges();
-    loadDatasetNavigation();
-    document.getElementById('userManagementNav').addEventListener('click', showUserManagement);
-    document.getElementById('datasetTableBody').addEventListener('input', handleDatasetCellEdit);
-    document.getElementById('datasetTableBody').addEventListener('click', handleDatasetRowAction);
-    document.getElementById('addDatasetRow').addEventListener('click', addDatasetRow);
-    document.getElementById('addDatasetColumn').addEventListener('click', addDatasetColumn);
-    document.getElementById('removeDatasetColumn').addEventListener('click', removeDatasetColumn);
-    document.getElementById('previousDatasetPage').addEventListener('click', function() {
-        if (datasetPage > 1 && confirmDiscardDatasetEdits()) loadDatasetPage(datasetPage - 1);
+const elements = {};
+
+document.addEventListener("DOMContentLoaded", initializeAdminWorkspace);
+
+async function initializeAdminWorkspace() {
+  [
+    "adminInfoDisplay",
+    "googleAccount",
+    "refreshSheetsButton",
+    "createSpreadsheetButton",
+    "spreadsheetSearch",
+    "spreadsheetListStatus",
+    "spreadsheetList",
+    "loadMoreSheetsButton",
+    "sheetsWelcome",
+    "spreadsheetWorkspace",
+    "activeSpreadsheetTitle",
+    "activeSheetRange",
+    "sheetTabs",
+    "addSheetButton",
+    "renameSheetButton",
+    "deleteSheetButton",
+    "rowPageStatus",
+    "columnPageStatus",
+    "previousRowsButton",
+    "nextRowsButton",
+    "previousColumnsButton",
+    "nextColumnsButton",
+    "addRowsButton",
+    "addColumnsButton",
+    "sheetGridStatus",
+    "sheetGridContainer",
+    "saveSheetButton",
+    "reloadSheetButton",
+    "adminStatus",
+    "logoutButton"
+  ].forEach((id) => {
+    elements[id] = document.getElementById(id);
+  });
+
+  elements.refreshSheetsButton.addEventListener("click", () => loadSpreadsheets(true));
+  elements.createSpreadsheetButton.addEventListener("click", createSpreadsheet);
+  elements.loadMoreSheetsButton.addEventListener("click", () => loadSpreadsheets(false));
+  elements.spreadsheetSearch.addEventListener("input", renderSpreadsheetList);
+  elements.sheetTabs.addEventListener("click", handleSheetTabClick);
+  elements.addSheetButton.addEventListener("click", addSheet);
+  elements.renameSheetButton.addEventListener("click", renameActiveSheet);
+  elements.deleteSheetButton.addEventListener("click", deleteActiveSheet);
+  elements.sheetGridContainer.addEventListener("input", handleCellEdit);
+  elements.saveSheetButton.addEventListener("click", saveSheetChanges);
+  elements.reloadSheetButton.addEventListener("click", reloadActiveSheet);
+  elements.previousRowsButton.addEventListener("click", () => changePage("row", -1));
+  elements.nextRowsButton.addEventListener("click", () => changePage("row", 1));
+  elements.previousColumnsButton.addEventListener("click", () => changePage("column", -1));
+  elements.nextColumnsButton.addEventListener("click", () => changePage("column", 1));
+  elements.addRowsButton.addEventListener("click", () => appendGrid("ROWS", 50));
+  elements.addColumnsButton.addEventListener("click", () => appendGrid("COLUMNS", 10));
+  elements.logoutButton.addEventListener("click", logout);
+
+  try {
+    const response = await window.proFitnessApiFetch("/api/admin/session");
+    const result = await readJsonResponse(response);
+    if (!response.ok || !result.success) {
+      window.location.replace("/signin-admin.html");
+      return;
+    }
+
+    state.adminEmail = typeof result.email === "string" ? result.email.toLowerCase() : null;
+    elements.adminInfoDisplay.textContent = state.adminEmail || "Phone-based admin";
+    if (!state.adminEmail || !result.canAccessGoogleSheets) {
+      elements.googleAccount.textContent = "Sign in with Google to load spreadsheets automatically.";
+      elements.spreadsheetListStatus.textContent = "Email OTP and phone sign-ins do not provide Google Sheets access.";
+      return;
+    }
+
+    await loadSignedInGoogleAccount();
+  } catch (error) {
+    console.error("Unable to verify the admin session:", error);
+    showStatus(error.message || "Unable to verify the admin session.", "error");
+  }
+}
+
+async function readJsonResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(`The server returned an unexpected response (HTTP ${response.status}).`);
+  }
+  return response.json();
+}
+
+async function handleGoogleAuthorization(response) {
+  if (response.error || !response.access_token) {
+    showStatus(response.error_description || response.error || "Google authorization failed.", "error");
+    return;
+  }
+
+  try {
+    const userResponse = await fetch(USER_INFO_API, {
+      headers: { Authorization: `Bearer ${response.access_token}` }
     });
-    document.getElementById('nextDatasetPage').addEventListener('click', function() {
-        if (datasetPage < datasetTotalPages && confirmDiscardDatasetEdits()) loadDatasetPage(datasetPage + 1);
+    const user = await readGoogleJsonResponse(userResponse);
+    const googleEmail = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
+
+    if (!userResponse.ok || user.email_verified !== true || googleEmail !== state.adminEmail) {
+      state.accessToken = null;
+      setSpreadsheetListStatus("");
+      throw new Error(
+        `Connect the Google account that matches your admin sign-in (${state.adminEmail}).`
+      );
+    }
+
+    state.accessToken = response.access_token;
+    elements.googleAccount.textContent = `Connected as ${googleEmail}`;
+    elements.refreshSheetsButton.hidden = false;
+    elements.createSpreadsheetButton.hidden = false;
+    elements.spreadsheetSearch.hidden = false;
+    elements.sheetsWelcome.hidden = false;
+    await loadSpreadsheets(true);
+  } catch (error) {
+    console.error("Google Sheets account verification failed:", error);
+    showStatus(error.message || "Unable to verify the Google account.", "error");
+  }
+}
+
+async function loadSignedInGoogleAccount() {
+  const accessToken = sessionStorage.getItem("adminGoogleAccessToken");
+  if (!accessToken) {
+    elements.googleAccount.textContent = "Sign in with Google to load spreadsheets automatically.";
+    elements.spreadsheetListStatus.textContent = "This admin session did not grant Google Sheets access.";
+    return;
+  }
+
+  try {
+    const userResponse = await fetch(USER_INFO_API, {
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
-});
+    const user = await readGoogleJsonResponse(userResponse);
+    const googleEmail = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
 
-async function readDatasetApiResponse(response) {
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-        if (response.status === 404) {
-            throw new Error('The admin data API is unavailable. Restart the running server with "npm start" to load the updated routes.');
-        }
-        throw new Error(`The server returned an unexpected response (HTTP ${response.status}).`);
+    if (!userResponse.ok || user.email_verified !== true || googleEmail !== state.adminEmail) {
+      sessionStorage.removeItem("adminGoogleAccessToken");
+      elements.googleAccount.textContent = "Sign in with Google to load spreadsheets automatically.";
+      elements.spreadsheetListStatus.textContent = "Google Sheets access has expired. Sign in with Google again.";
+      return;
     }
-    return response.json();
+
+    state.accessToken = accessToken;
+    elements.googleAccount.textContent = `Google account: ${googleEmail}`;
+    elements.refreshSheetsButton.hidden = false;
+    elements.createSpreadsheetButton.hidden = false;
+    elements.spreadsheetSearch.hidden = false;
+    await loadSpreadsheets(true);
+  } catch (error) {
+    console.error("Unable to restore Google Sheets access:", error);
+    sessionStorage.removeItem("adminGoogleAccessToken");
+    elements.googleAccount.textContent = "Sign in with Google to load spreadsheets automatically.";
+    elements.spreadsheetListStatus.textContent = error.message || "Unable to restore Google Sheets access.";
+  }
 }
 
-async function loadDatasetNavigation() {
-    const navigation = document.getElementById('datasetNavigation');
-    try {
-        const response = await window.proFitnessApiFetch(`${API_BASE_URL}/api/admin/datasets`);
-        const result = await readDatasetApiResponse(response);
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Unable to load member collections.');
-        }
-
-        navigation.replaceChildren();
-        result.collections.forEach(collection => {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'admin-sidebar-item';
-            button.dataset.collection = collection.name;
-            button.innerHTML = `<i class="fas fa-table"></i>`;
-            const label = document.createElement('span');
-            label.className = 'admin-sidebar-label';
-            label.textContent = collection.label;
-            const count = document.createElement('span');
-            count.className = 'admin-sidebar-count';
-            count.textContent = collection.count.toLocaleString();
-            button.append(label, count);
-            button.addEventListener('click', function() {
-                showDataset(collection.name, collection.label);
-            });
-            navigation.appendChild(button);
-        });
-        if (result.collections.length === 0) {
-            activeDataset = null;
-            document.getElementById('datasetView').hidden = true;
-            document.getElementById('datasetActions').hidden = true;
-            showStatus('No visible collections were found in the gym database.', 'info');
-        } else if (!activeDataset || !result.collections.some(
-            collection => collection.name === activeDataset.collection
-        )) {
-            const firstCollection = result.collections[0];
-            showDataset(firstCollection.name, firstCollection.label);
-        }
-    } catch (error) {
-        console.error('Error loading member collection navigation:', error);
-        showStatus(error.message || 'Unable to load member collections.', 'error');
+async function readGoogleJsonResponse(response) {
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(`Google returned an unexpected response (HTTP ${response.status}).`);
+  }
+  if (!response.ok) {
+    const message = result.error?.message || result.error_description || `Google request failed (HTTP ${response.status}).`;
+    if (response.status === 401) {
+      clearGoogleSession();
     }
+    throw new Error(message);
+  }
+  return result;
 }
 
-function showUserManagement() {
-    if (!confirmDiscardDatasetEdits()) return;
-    if (activeDatasetRequest) {
-        activeDatasetRequest.abort();
-        activeDatasetRequest = null;
+async function googleApiFetch(url, options = {}) {
+  if (!state.accessToken) {
+    throw new Error("Sign in with Google again to continue.");
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${state.accessToken}`,
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers
     }
-    activeView = 'users';
-    activeDataset = null;
-    document.getElementById('userManagementNav').classList.add('active');
-    document.querySelectorAll('#datasetNavigation .admin-sidebar-item').forEach(button => {
-        button.classList.remove('active');
+  });
+  return readGoogleJsonResponse(response);
+}
+
+async function loadSpreadsheets(reset) {
+  if (!state.accessToken) return;
+  if (reset) {
+    state.spreadsheets = [];
+    state.nextPageToken = null;
+    elements.spreadsheetList.replaceChildren();
+    setSpreadsheetListStatus("Loading spreadsheets...");
+  }
+  elements.refreshSheetsButton.disabled = true;
+  elements.loadMoreSheetsButton.disabled = true;
+
+  try {
+    const params = new URLSearchParams({
+      q: "mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
+      fields: "nextPageToken,files(id,name,mimeType,modifiedTime)",
+      orderBy: "modifiedTime desc",
+      pageSize: "100",
+      supportsAllDrives: "true",
+      includeItemsFromAllDrives: "true"
     });
-    document.getElementById('excelTable').hidden = false;
-    document.getElementById('datasetView').hidden = true;
-    document.getElementById('datasetActions').hidden = true;
-    document.getElementById('saveChangesButton').hidden = false;
-    document.getElementById('saveChangesButton').innerHTML = '<i class="fas fa-save"></i> Save Changes';
-    document.getElementById('saveChangesButton').disabled = false;
-    document.getElementById('downloadExcelButton').hidden = false;
-    document.getElementById('recentChangesButton').hidden = false;
-    document.getElementById('recentChangesPanel').hidden = false;
-    document.getElementById('searchInput').placeholder = 'Search users...';
-    document.getElementById('searchInput').value = '';
-    if (hot && hot.search) {
-        hot.search.query('');
-        hot.render();
-    }
-    document.getElementById('statusMessage').textContent = '';
-    hideStatus();
-}
+    if (state.nextPageToken) params.set("pageToken", state.nextPageToken);
 
-function showDataset(collection, label) {
-    if (!confirmDiscardDatasetEdits()) return;
-    activeView = 'dataset';
-    activeDataset = { collection, label };
-    datasetPage = 1;
-    document.getElementById('userManagementNav').classList.remove('active');
-    document.querySelectorAll('#datasetNavigation .admin-sidebar-item').forEach(button => {
-        button.classList.toggle('active', button.dataset.collection === collection);
-    });
-    document.getElementById('excelTable').hidden = true;
-    document.getElementById('datasetView').hidden = false;
-    document.getElementById('datasetActions').hidden = false;
-    document.getElementById('saveChangesButton').hidden = false;
-    document.getElementById('saveChangesButton').innerHTML = '<i class="fas fa-save"></i> Save Table Changes';
-    document.getElementById('saveChangesButton').disabled = datasetPendingEdits.size === 0;
-    document.getElementById('downloadExcelButton').hidden = false;
-    document.getElementById('recentChangesButton').hidden = true;
-    document.getElementById('recentChangesPanel').hidden = true;
-    document.getElementById('searchInput').placeholder = `Search ${label}...`;
-    document.getElementById('searchInput').value = '';
-    datasetAppliedSearch = '';
-    loadDatasetPage(1);
-}
+    const result = await googleApiFetch(`${DRIVE_API}/files?${params.toString()}`);
+    const newFiles = Array.isArray(result.files) ? result.files : [];
+    state.spreadsheets.push(...newFiles);
+    state.nextPageToken = result.nextPageToken || null;
+    renderSpreadsheetList();
+    elements.refreshSheetsButton.hidden = false;
+    elements.spreadsheetSearch.hidden = false;
 
-function confirmDiscardDatasetEdits() {
-    if (datasetPendingEdits.size === 0) return true;
-    if (!window.confirm('Discard unsaved table edits?')) return false;
-    datasetPendingEdits.clear();
-    document.getElementById('saveChangesButton').disabled = true;
-    document.getElementById('saveChangesButton').title = '';
-    return true;
-}
-
-function displayDatasetValue(value) {
-    return value === null || value === undefined
-        ? ''
-        : typeof value === 'object' ? JSON.stringify(value) : String(value);
-}
-
-function updateDatasetColumnSelector(fields) {
-    const selector = document.getElementById('deleteDatasetColumn');
-    selector.replaceChildren();
-    fields.forEach(field => {
-        const option = document.createElement('option');
-        option.value = field;
-        option.textContent = field;
-        selector.appendChild(option);
-    });
-    document.getElementById('removeDatasetColumn').disabled = fields.length === 0;
-}
-
-async function addDatasetRow() {
-    if (!activeDataset || !confirmDiscardDatasetEdits()) return;
-    if (datasetFields.length === 0) {
-        showStatus('Cannot add a row because this collection has no fields.', 'error');
-        return;
-    }
-
-    try {
-        const response = await window.proFitnessApiFetch(
-            `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}/records`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ values: Object.fromEntries(datasetFields.map(field => [field, ''])) })
-            }
-        );
-        const result = await readDatasetApiResponse(response);
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Unable to add a row.');
-        }
-
-        datasetPendingEdits.clear();
-        await loadDatasetNavigation();
-        datasetPage = Math.max(1, Math.ceil(result.total / 50));
-        await loadDatasetPage(datasetPage);
-        showStatus('New row added to MongoDB.', 'success');
-    } catch (error) {
-        console.error('Error adding collection row:', error);
-        showStatus(error.message || 'Unable to add a row.', 'error');
-    }
-}
-
-async function handleDatasetRowAction(event) {
-    const button = event.target.closest('[data-delete-record]');
-    if (!button || !activeDataset) return;
-    const recordId = button.dataset.deleteRecord;
-    if (!confirmDiscardDatasetEdits()) return;
-    if (!window.confirm('Delete this record from MongoDB? This cannot be undone.')) return;
-
-    try {
-        const response = await window.proFitnessApiFetch(
-            `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}/records/${encodeURIComponent(recordId)}`,
-            { method: 'DELETE' }
-        );
-        const result = await readDatasetApiResponse(response);
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Unable to delete this row.');
-        }
-
-        datasetPendingEdits.delete(recordId);
-        datasetOriginalRows.delete(recordId);
-        document.getElementById('searchInput').value = '';
-        datasetAppliedSearch = '';
-        await loadDatasetNavigation();
-        await loadDatasetPage(Math.min(datasetPage, Math.max(1, Math.ceil(result.total / 50))));
-        showStatus('Row deleted from MongoDB.', 'success');
-    } catch (error) {
-        console.error('Error deleting collection row:', error);
-        showStatus(error.message || 'Unable to delete this row.', 'error');
-    }
-}
-
-async function addDatasetColumn() {
-    if (!activeDataset || !confirmDiscardDatasetEdits()) return;
-    const field = window.prompt('Enter a name for the new column:');
-    if (field === null) return;
-    const name = field.trim();
-    if (!name) {
-        showStatus('Column name cannot be empty.', 'error');
-        return;
-    }
-    if (!window.confirm(`Add "${name}" as a blank field to every record in ${activeDataset.label}?`)) return;
-    await changeDatasetColumn('add', name);
-}
-
-async function removeDatasetColumn() {
-    if (!activeDataset || !confirmDiscardDatasetEdits()) return;
-    const field = document.getElementById('deleteDatasetColumn').value;
-    if (!field) {
-        showStatus('Select a column to delete.', 'error');
-        return;
-    }
-    if (!window.confirm(`Permanently remove "${field}" from every record in ${activeDataset.label}? This cannot be undone.`)) return;
-    await changeDatasetColumn('delete', field);
-}
-
-async function changeDatasetColumn(action, field) {
-    try {
-        const response = await window.proFitnessApiFetch(
-            `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}/columns`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, field })
-            }
-        );
-        const result = await readDatasetApiResponse(response);
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Unable to update the collection columns.');
-        }
-
-        datasetPendingEdits.clear();
-        datasetOriginalRows.clear();
-        document.getElementById('searchInput').value = '';
-        datasetAppliedSearch = '';
-        await loadDatasetNavigation();
-        await loadDatasetPage(1);
-        showStatus(
-            action === 'add'
-                ? `Added "${field}" to ${result.modified} record(s).`
-                : `Removed "${field}" from ${result.modified} record(s).`,
-            'success'
-        );
-    } catch (error) {
-        console.error(`Error ${action}ing collection column:`, error);
-        showStatus(error.message || 'Unable to update the collection columns.', 'error');
-    }
-}
-
-function getDatasetEditCount() {
-    return [...datasetPendingEdits.values()]
-        .reduce((count, fields) => count + Object.keys(fields).length, 0);
-}
-
-function handleDatasetCellEdit(event) {
-    const cell = event.target.closest('td[contenteditable="true"]');
-    if (!cell) return;
-
-    const { recordId, field } = cell.dataset;
-    const originalRecord = datasetOriginalRows.get(recordId);
-    if (!originalRecord || !Object.prototype.hasOwnProperty.call(originalRecord, field)) return;
-
-    const value = cell.textContent;
-    const originalValue = displayDatasetValue(originalRecord[field]);
-    let edits = datasetPendingEdits.get(recordId);
-    if (value === originalValue) {
-        if (edits) {
-            delete edits[field];
-            if (Object.keys(edits).length === 0) datasetPendingEdits.delete(recordId);
-        }
-        cell.classList.remove('dataset-cell-edited');
+    if (state.spreadsheets.length === 0) {
+      setSpreadsheetListStatus("No Google spreadsheets were found for this account.");
     } else {
-        if (!edits) {
-            edits = {};
-            datasetPendingEdits.set(recordId, edits);
-        }
-        edits[field] = value;
-        cell.classList.add('dataset-cell-edited');
+      setSpreadsheetListStatus(
+        state.nextPageToken
+          ? `${state.spreadsheets.length} spreadsheets loaded.`
+          : `${state.spreadsheets.length} spreadsheets available.`
+      );
     }
 
-    document.getElementById('saveChangesButton').disabled = datasetPendingEdits.size === 0;
-    document.getElementById('saveChangesButton').title =
-        `${getDatasetEditCount()} unsaved cell edit(s)`;
+    if (state.activeSpreadsheet && reset) {
+      const currentFile = state.spreadsheets.find((file) => file.id === state.activeSpreadsheet.id);
+      if (currentFile) {
+        state.activeSpreadsheet = currentFile;
+        renderSpreadsheetList();
+      }
+    } else if (reset && state.spreadsheets.length > 0) {
+      await openSpreadsheet(state.spreadsheets[0]);
+    }
+  } catch (error) {
+    console.error("Unable to load Google spreadsheets:", error);
+    setSpreadsheetListStatus(error.message || "Unable to load spreadsheets.");
+    showStatus(error.message || "Unable to load spreadsheets.", "error");
+  } finally {
+    elements.refreshSheetsButton.disabled = false;
+    elements.loadMoreSheetsButton.disabled = false;
+  }
 }
 
-async function loadDatasetPage(page) {
-    if (!activeDataset) return;
+async function createSpreadsheet() {
+  if (!confirmDiscardChanges()) return;
+  const defaultTitle = `Untitled spreadsheet ${new Date().toLocaleDateString()}`;
+  const title = window.prompt("Name the new spreadsheet:", defaultTitle);
+  if (title === null) return;
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle || trimmedTitle.length > 100) {
+    showStatus("Spreadsheet names must contain between 1 and 100 characters.", "error");
+    return;
+  }
 
-    if (activeDatasetRequest) {
-        activeDatasetRequest.abort();
-    }
-    activeDatasetRequest = new AbortController();
-    const request = activeDatasetRequest;
-    const tableBody = document.getElementById('datasetTableBody');
-    const search = document.getElementById('searchInput').value.trim();
-    document.getElementById('datasetTitle').textContent = activeDataset.label;
-    document.getElementById('datasetSummary').textContent = 'Loading records...';
-    tableBody.replaceChildren();
-
-    try {
-        const params = new URLSearchParams({ page: String(page) });
-        if (search) params.set('search', search);
-        const response = await window.proFitnessApiFetch(
-            `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}?${params}`,
-            { signal: request.signal }
-        );
-        const result = await readDatasetApiResponse(response);
-        if (request !== activeDatasetRequest) return;
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Unable to load this collection.');
-        }
-
-        datasetPage = result.page;
-        datasetTotalPages = Math.max(result.totalPages, 1);
-        datasetAppliedSearch = search;
-        datasetFields = result.fields;
-        updateDatasetColumnSelector(datasetFields);
-        document.getElementById('datasetTitle').textContent = result.label;
-        document.getElementById('datasetSummary').textContent =
-            `${result.total.toLocaleString()} records · ${result.fields.length} columns · ${result.pageSize} per page`;
-        document.getElementById('datasetPageStatus').textContent =
-            `Page ${datasetPage} of ${datasetTotalPages}`;
-        document.getElementById('previousDatasetPage').disabled = datasetPage <= 1;
-        document.getElementById('nextDatasetPage').disabled = datasetPage >= datasetTotalPages;
-
-        const tableHead = document.getElementById('datasetTableHead');
-        tableHead.replaceChildren();
-        datasetOriginalRows.clear();
-        const headerRow = document.createElement('tr');
-        const idHeader = document.createElement('th');
-        idHeader.scope = 'col';
-        idHeader.textContent = 'Record ID (read-only)';
-        headerRow.appendChild(idHeader);
-        result.fields.forEach(field => {
-            const header = document.createElement('th');
-            header.scope = 'col';
-            header.textContent = field;
-            headerRow.appendChild(header);
-        });
-        const actionHeader = document.createElement('th');
-        actionHeader.scope = 'col';
-        actionHeader.textContent = 'Actions';
-        headerRow.appendChild(actionHeader);
-        tableHead.appendChild(headerRow);
-
-        if (result.rows.length === 0) {
-            const emptyRow = document.createElement('tr');
-            const emptyCell = document.createElement('td');
-            emptyCell.colSpan = Math.max(result.fields.length + 2, 1);
-            emptyCell.textContent = 'No records found.';
-            emptyRow.appendChild(emptyCell);
-            tableBody.appendChild(emptyRow);
-            return;
-        }
-
-        result.rows.forEach(record => {
-            datasetOriginalRows.set(record.id, record.values);
-            const row = document.createElement('tr');
-            const idCell = document.createElement('td');
-            idCell.textContent = record.id;
-            idCell.className = 'dataset-record-id';
-            row.appendChild(idCell);
-            result.fields.forEach(field => {
-                const cell = document.createElement('td');
-                cell.contentEditable = 'true';
-                cell.spellcheck = false;
-                cell.dataset.recordId = record.id;
-                cell.dataset.field = field;
-                const hasField = Object.prototype.hasOwnProperty.call(record.values, field);
-                cell.contentEditable = String(hasField);
-                if (!hasField) {
-                    cell.classList.add('dataset-cell-readonly');
-                }
-                const pending = datasetPendingEdits.get(record.id);
-                const value = pending && Object.prototype.hasOwnProperty.call(pending, field)
-                    ? pending[field]
-                    : displayDatasetValue(record.values[field]);
-                cell.textContent = value;
-                if (pending && Object.prototype.hasOwnProperty.call(pending, field)) {
-                    cell.classList.add('dataset-cell-edited');
-                }
-                row.appendChild(cell);
-            });
-            const actionCell = document.createElement('td');
-            actionCell.className = 'dataset-row-actions';
-            const deleteButton = document.createElement('button');
-            deleteButton.type = 'button';
-            deleteButton.className = 'dataset-row-delete';
-            deleteButton.dataset.deleteRecord = record.id;
-            deleteButton.innerHTML = '<i class="fas fa-trash"></i> Delete';
-            deleteButton.setAttribute('aria-label', 'Delete this row');
-            actionCell.appendChild(deleteButton);
-            row.appendChild(actionCell);
-            tableBody.appendChild(row);
-        });
-        document.getElementById('saveChangesButton').disabled = datasetPendingEdits.size === 0;
-        document.getElementById('saveChangesButton').title =
-            `${getDatasetEditCount()} unsaved cell edit(s)`;
-    } catch (error) {
-        if (error.name === 'AbortError' || request !== activeDatasetRequest) return;
-        console.error(`Error loading ${activeDataset.collection}:`, error);
-        document.getElementById('datasetSummary').textContent =
-            error.message || 'Unable to load this collection.';
-        document.getElementById('datasetPageStatus').textContent = '';
-        document.getElementById('previousDatasetPage').disabled = true;
-        document.getElementById('nextDatasetPage').disabled = true;
-    }
-}
-
-// Load users from database
-async function loadUsersData() {
-    try {
-        showStatus('Loading users data...', 'info');
-        const response = await window.proFitnessApiFetch(`${API_BASE_URL}/api/users`);
-        const data = await response.json();
-        
-        if (data.success) {
-            usersData = data.users;
-            initializeTable();
-            showStatus('Users loaded successfully!', 'success');
-            setTimeout(() => hideStatus(), 3000);
-        } else {
-            showStatus('Error loading users: ' + data.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error loading users:', error);
-        showStatus('Error loading users. Please check your connection.', 'error');
-        // Initialize empty table if API fails
-        initializeTable();
-    }
-}
-
-// Initialize Handsontable
-function initializeTable() {
-    const container = document.getElementById('excelTable');
-    
-    // Prepare data for Handsontable
-    const tableData = usersData.length > 0 
-        ? usersData.map(user => [
-            user._id || '',
-            user.name || '',
-            user.email || '',
-            user.phone || '',
-            user.gender || '',
-            user.age || '',
-            user.fitnessGoal || '',
-            user.membershipType || '',
-            user.membershipStatus || 'Active',
-            user.joinDate ? new Date(user.joinDate).toLocaleDateString() : new Date().toLocaleDateString(),
-            user.address || '',
-            user.notes || ''
-        ])
-        : [];
-
-    // Column headers
-    const columns = [
-        { data: 0, title: 'ID', readOnly: true, width: 100 },
-        { data: 1, title: 'Name', width: 150 },
-        { data: 2, title: 'Email', width: 200 },
-        { data: 3, title: 'Phone', width: 120 },
-        { data: 4, title: 'Gender', width: 100 },
-        { data: 5, title: 'Age', type: 'numeric', width: 80 },
-        { data: 6, title: 'Fitness Goal', width: 150 },
-        { data: 7, title: 'Membership Type', width: 150 },
-        { data: 8, title: 'Status', width: 120 },
-        { data: 9, title: 'Join Date', width: 120 },
-        { data: 10, title: 'Address', width: 200 },
-        { data: 11, title: 'Notes', width: 200 }
-    ];
-
-    // Destroy existing instance if any
-    if (hot) {
-        hot.destroy();
-    }
-
-    // Create new Handsontable instance
-    hot = new Handsontable(container, {
-        data: tableData,
-        columns: columns,
-        rowHeaders: true,
-        colHeaders: true,
-        width: '100%',
-        height: 600,
-        licenseKey: 'non-commercial-and-evaluation',
-        contextMenu: ['row_above', 'row_below', 'remove_row', 'copy', 'cut'],
-        manualColumnResize: true,
-        manualRowResize: true,
-        filters: true,
-        dropdownMenu: true,
-        copyPaste: {
-            pasteMode: 'shift_down',
-            rowsLimit: 1000,
-            columnsLimit: 1000
-        },
-        search: true,
-        afterChange: function(changes, source) {
-            if (source !== 'loadData' && source !== 'CopyPaste.paste') {
-                trackChange(changes);
-            } else if (source === 'CopyPaste.paste') {
-                // Track all paste changes
-                if (changes) {
-                    trackChange(changes);
-                }
-            }
-        },
-        afterCreateRow: function(index, amount) {
-            // Track new row creation
-            const change = {
-                type: 'create_row',
-                row: index,
-                timestamp: new Date().toLocaleString()
-            };
-            recentChanges.unshift(change);
-            if (recentChanges.length > 50) {
-                recentChanges.pop();
-            }
-            saveRecentChanges();
-            updateRecentChangesDisplay();
-        },
-        afterRemoveRow: function(index, amount) {
-            // Track row deletion
-            const deletedRows = [];
-            for (let i = index; i < index + amount; i++) {
-                if (usersData[i] && usersData[i]._id) {
-                    deletedRows.push(usersData[i]._id);
-                    // Also delete from database
-                    deleteUserFromDB(usersData[i]._id);
-                }
-            }
-            if (deletedRows.length > 0) {
-                trackRowDeletion(deletedRows);
-            }
-            // Update usersData array
-            usersData.splice(index, amount);
-        }
+  elements.createSpreadsheetButton.disabled = true;
+  try {
+    const result = await googleApiFetch(`${SHEETS_API}/spreadsheets`, {
+      method: "POST",
+      body: JSON.stringify({
+        properties: { title: trimmedTitle },
+        sheets: [{
+          properties: {
+            title: "Sheet1",
+            gridProperties: { rowCount: 1000, columnCount: 26 }
+          }
+        }]
+      })
     });
+    const file = {
+      id: result.spreadsheetId,
+      name: result.properties?.title || trimmedTitle,
+      mimeType: "application/vnd.google-apps.spreadsheet"
+    };
+    state.spreadsheets = [file, ...state.spreadsheets.filter((item) => item.id !== file.id)];
+    renderSpreadsheetList();
+    await openSpreadsheet(file);
+    showStatus("Spreadsheet created.", "success");
+  } catch (error) {
+    console.error("Unable to create Google spreadsheet:", error);
+    showStatus(error.message || "Unable to create spreadsheet.", "error");
+  } finally {
+    elements.createSpreadsheetButton.disabled = false;
+  }
 }
 
-// Track changes made to the table
-function trackChange(changes) {
-    if (!changes) return;
-    
-    changes.forEach(([row, col, oldValue, newValue]) => {
-        if (oldValue !== newValue) {
-            const columnNames = ['ID', 'Name', 'Email', 'Phone', 'Gender', 'Age', 'Fitness Goal', 
-                                'Membership Type', 'Status', 'Join Date', 'Address', 'Notes'];
-            const change = {
-                type: 'edit',
-                row: row,
-                column: columnNames[col],
-                oldValue: oldValue,
-                newValue: newValue,
-                timestamp: new Date().toLocaleString(),
-                userId: usersData[row] ? usersData[row]._id : 'new'
-            };
-            recentChanges.unshift(change);
-            if (recentChanges.length > 50) {
-                recentChanges.pop();
-            }
-            saveRecentChanges();
-            updateRecentChangesDisplay();
-        }
-    });
+function renderSpreadsheetList() {
+  const filter = elements.spreadsheetSearch.value.trim().toLowerCase();
+  const files = state.spreadsheets.filter((file) => file.name.toLowerCase().includes(filter));
+  elements.spreadsheetList.replaceChildren();
+
+  files.forEach((file) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "spreadsheet-list-item";
+    button.classList.toggle("active", state.activeSpreadsheet?.id === file.id);
+    button.setAttribute("role", "listitem");
+    button.title = file.name;
+    button.addEventListener("click", () => openSpreadsheet(file));
+
+    const icon = document.createElement("i");
+    icon.className = "fas fa-table";
+    icon.setAttribute("aria-hidden", "true");
+    const label = document.createElement("span");
+    label.textContent = file.name;
+    button.append(icon, label);
+    elements.spreadsheetList.appendChild(button);
+  });
+
+  elements.loadMoreSheetsButton.hidden = !state.nextPageToken || Boolean(filter);
+  if (filter && files.length === 0 && state.spreadsheets.length > 0) {
+    setSpreadsheetListStatus("No loaded spreadsheet names match that filter.");
+  }
 }
 
-// Track row deletion
-function trackRowDeletion(userIds) {
-    userIds.forEach(userId => {
-        const change = {
-            type: 'delete',
-            userId: userId,
-            timestamp: new Date().toLocaleString()
-        };
-        recentChanges.unshift(change);
-    });
-    saveRecentChanges();
-    updateRecentChangesDisplay();
+function setSpreadsheetListStatus(message) {
+  elements.spreadsheetListStatus.textContent = message;
 }
 
-// Save changes to MongoDB
-async function saveChanges() {
-    if (activeView === 'dataset') {
-        await saveDatasetChanges();
-        return;
+async function openSpreadsheet(file) {
+  if (!confirmDiscardChanges()) return;
+  const requestId = ++state.spreadsheetRequest;
+  state.activeSpreadsheet = file;
+  state.activeSheet = null;
+  state.pendingEdits.clear();
+  state.sheets = [];
+  state.rowPage = 0;
+  state.columnPage = 0;
+  elements.sheetsWelcome.hidden = true;
+  elements.spreadsheetWorkspace.hidden = false;
+  elements.activeSpreadsheetTitle.textContent = file.name;
+  elements.sheetTabs.replaceChildren();
+  elements.sheetGridContainer.replaceChildren();
+  elements.sheetGridStatus.textContent = "Loading spreadsheet...";
+  updateSaveButton();
+  renderSpreadsheetList();
+
+  try {
+    const fields = "spreadsheetId,properties(title),sheets(properties(sheetId,title,index,gridProperties(rowCount,columnCount)))";
+    const params = new URLSearchParams({ fields });
+    const result = await googleApiFetch(
+      `${SHEETS_API}/spreadsheets/${encodeURIComponent(file.id)}?${params.toString()}`
+    );
+    if (requestId !== state.spreadsheetRequest) return;
+    state.activeSpreadsheet.name = result.properties?.title || file.name;
+    elements.activeSpreadsheetTitle.textContent = state.activeSpreadsheet.name;
+    state.sheets = (result.sheets || [])
+      .map((sheet) => sheet.properties)
+      .filter((sheet) => sheet && typeof sheet.title === "string")
+      .sort((left, right) => (left.index || 0) - (right.index || 0));
+
+    if (state.sheets.length === 0) {
+      elements.sheetGridStatus.textContent = "This spreadsheet does not contain any visible sheets.";
+      return;
     }
 
-    try {
-        showStatus('Saving changes...', 'info');
-        const tableData = hot.getData();
-        const updatedUsers = [];
-        const newUsers = [];
-
-        tableData.forEach((row, index) => {
-            // Skip completely empty rows
-            if (!row[1] && !row[2] && !row[3] && !row[0]) {
-                return;
-            }
-
-            const userData = {
-                name: row[1] || '',
-                email: row[2] || '',
-                phone: row[3] || '',
-                gender: row[4] || '',
-                age: row[5] ? parseInt(row[5]) : null,
-                fitnessGoal: row[6] || '',
-                membershipType: row[7] || '',
-                membershipStatus: row[8] || 'Active',
-                joinDate: row[9] || new Date(),
-                address: row[10] || '',
-                notes: row[11] || ''
-            };
-
-            if (row[0]) {
-                // Existing user - update
-                userData._id = row[0];
-                updatedUsers.push(userData);
-            } else if (row[1] || row[2] || row[3]) {
-                // New user - create
-                newUsers.push(userData);
-            }
-        });
-
-        // Send updates to backend
-        const response = await window.proFitnessApiFetch(`${API_BASE_URL}/api/users/bulk-update`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                updates: updatedUsers,
-                creates: newUsers
-            })
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-            showStatus(`Successfully saved! Updated: ${result.updated}, Created: ${result.created}`, 'success');
-            // Reload data to get IDs for new users
-            setTimeout(() => {
-                loadUsersData();
-            }, 1000);
-        } else {
-            showStatus('Error saving: ' + result.message, 'error');
-        }
-    } catch (error) {
-        console.error('Error saving changes:', error);
-        showStatus('Error saving changes. Please try again.', 'error');
-    }
+    renderSheetTabs();
+    await selectSheet(state.sheets[0].sheetId);
+  } catch (error) {
+    if (requestId !== state.spreadsheetRequest) return;
+    console.error("Unable to open Google spreadsheet:", error);
+    elements.sheetGridStatus.textContent = error.message || "Unable to open spreadsheet.";
+    showStatus(error.message || "Unable to open spreadsheet.", "error");
+  }
 }
 
-async function saveDatasetChanges() {
-    if (!activeDataset || datasetPendingEdits.size === 0) {
-        showStatus('There are no table changes to save.', 'info');
-        return;
-    }
-
-    const button = document.getElementById('saveChangesButton');
-    button.disabled = true;
-    try {
-        const updates = [...datasetPendingEdits.entries()].map(([id, fields]) => ({ id, fields }));
-        const response = await window.proFitnessApiFetch(
-            `${API_BASE_URL}/api/admin/datasets/${encodeURIComponent(activeDataset.collection)}`,
-            {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ updates })
-            }
-        );
-        const result = await readDatasetApiResponse(response);
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Unable to save table changes.');
-        }
-
-        datasetPendingEdits.clear();
-        datasetOriginalRows.clear();
-        showStatus(`Saved ${result.modified} edited record(s) to MongoDB.`, 'success');
-        await loadDatasetPage(datasetPage);
-    } catch (error) {
-        console.error('Error saving member collection edits:', error);
-        showStatus(error.message || 'Unable to save table changes.', 'error');
-    } finally {
-        button.disabled = datasetPendingEdits.size === 0;
-        button.title = `${getDatasetEditCount()} unsaved cell edit(s)`;
-    }
+function renderSheetTabs() {
+  elements.sheetTabs.replaceChildren();
+  elements.renameSheetButton.disabled = !state.activeSheet;
+  elements.deleteSheetButton.disabled = !state.activeSheet || state.sheets.length <= 1;
+  elements.addSheetButton.disabled = !state.activeSpreadsheet;
+  state.sheets.forEach((sheet) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "sheet-tab";
+    button.dataset.sheetId = String(sheet.sheetId);
+    button.setAttribute("role", "tab");
+    button.setAttribute("aria-selected", String(state.activeSheet?.sheetId === sheet.sheetId));
+    button.classList.toggle("active", state.activeSheet?.sheetId === sheet.sheetId);
+    button.textContent = sheet.title;
+    elements.sheetTabs.appendChild(button);
+  });
 }
 
-// Download as Excel
-function downloadExcel() {
-    if (activeView === 'dataset') {
-        const table = document.getElementById('datasetTable');
-        const workbook = XLSX.utils.table_to_book(table, { sheet: activeDataset.label.slice(0, 31) });
-        XLSX.writeFile(workbook, `${activeDataset.collection.replace(/\s+/g, '_')}_page_${datasetPage}.xlsx`);
-        return;
-    }
-
-    const data = hot.getData();
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Gender', 'Age', 'Fitness Goal', 
-                     'Membership Type', 'Status', 'Join Date', 'Address', 'Notes'];
-    
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-    XLSX.utils.book_append_sheet(wb, ws, 'Users');
-    
-    // Download
-    const fileName = `users_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    showStatus('Excel file downloaded successfully!', 'success');
-    setTimeout(() => hideStatus(), 3000);
+async function handleSheetTabClick(event) {
+  const button = event.target.closest("[data-sheet-id]");
+  if (!button || !confirmDiscardChanges()) return;
+  await selectSheet(Number(button.dataset.sheetId));
 }
 
-// Refresh data from database
-async function refreshData() {
-    if (activeView === 'dataset') {
-        if (!confirmDiscardDatasetEdits()) return;
-        await loadDatasetNavigation();
-        if (activeDataset) await loadDatasetPage(datasetPage);
+async function addSheet() {
+  if (!state.activeSpreadsheet || !confirmDiscardChanges()) return;
+  const defaultTitle = `Sheet${state.sheets.length + 1}`;
+  const title = window.prompt("Name the new sheet:", defaultTitle);
+  if (title === null) return;
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle || trimmedTitle.length > 100) {
+    showStatus("Sheet names must contain between 1 and 100 characters.", "error");
+    return;
+  }
+  if (state.sheets.some((sheet) => sheet.title.toLowerCase() === trimmedTitle.toLowerCase())) {
+    showStatus("A sheet with that name already exists.", "error");
+    return;
+  }
+
+  try {
+    const result = await updateSpreadsheet([{ addSheet: { properties: {
+      title: trimmedTitle,
+      gridProperties: { rowCount: 1000, columnCount: 26 }
+    } } }]);
+    const added = result.replies?.[0]?.addSheet?.properties;
+    if (!added || !Number.isInteger(added.sheetId)) {
+      throw new Error("Google did not return the new sheet details.");
+    }
+    state.sheets.push(added);
+    renderSheetTabs();
+    await selectSheet(added.sheetId);
+    showStatus(`Sheet "${trimmedTitle}" created.`, "success");
+  } catch (error) {
+    console.error("Unable to create sheet:", error);
+    showStatus(error.message || "Unable to create sheet.", "error");
+  }
+}
+
+async function renameActiveSheet() {
+  if (!state.activeSheet || !confirmDiscardChanges()) return;
+  const title = window.prompt("Rename sheet:", state.activeSheet.title);
+  if (title === null) return;
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle || trimmedTitle.length > 100) {
+    showStatus("Sheet names must contain between 1 and 100 characters.", "error");
+    return;
+  }
+  if (state.sheets.some((sheet) =>
+    sheet.sheetId !== state.activeSheet.sheetId &&
+    sheet.title.toLowerCase() === trimmedTitle.toLowerCase()
+  )) {
+    showStatus("A sheet with that name already exists.", "error");
+    return;
+  }
+  if (trimmedTitle === state.activeSheet.title) return;
+
+  try {
+    await updateSpreadsheet([{
+      updateSheetProperties: {
+        properties: { sheetId: state.activeSheet.sheetId, title: trimmedTitle },
+        fields: "title"
+      }
+    }]);
+    state.activeSheet.title = trimmedTitle;
+    renderSheetTabs();
+    await loadGrid();
+    showStatus(`Sheet renamed to "${trimmedTitle}".`, "success");
+  } catch (error) {
+    console.error("Unable to rename sheet:", error);
+    showStatus(error.message || "Unable to rename sheet.", "error");
+  }
+}
+
+async function deleteActiveSheet() {
+  if (!state.activeSpreadsheet || !state.activeSheet || !confirmDiscardChanges()) return;
+  if (state.sheets.length <= 1) {
+    showStatus("A spreadsheet must contain at least one sheet.", "error");
+    return;
+  }
+  const sheetToDelete = state.activeSheet;
+  if (!window.confirm(`Permanently delete the sheet "${sheetToDelete.title}"?`)) return;
+  const sheetIndex = state.sheets.findIndex((sheet) => sheet.sheetId === sheetToDelete.sheetId);
+
+  try {
+    await updateSpreadsheet([{ deleteSheet: { sheetId: sheetToDelete.sheetId } }]);
+    state.sheets = state.sheets.filter((sheet) => sheet.sheetId !== sheetToDelete.sheetId);
+    renderSheetTabs();
+    const nextSheet = state.sheets[Math.max(0, sheetIndex - 1)];
+    await selectSheet(nextSheet.sheetId);
+    showStatus(`Sheet "${sheetToDelete.title}" deleted.`, "success");
+  } catch (error) {
+    console.error("Unable to delete sheet:", error);
+    showStatus(error.message || "Unable to delete sheet.", "error");
+  }
+}
+
+async function appendGrid(dimension, length) {
+  if (!state.activeSheet || !confirmDiscardChanges()) return;
+  try {
+    await updateSpreadsheet([{
+      appendDimension: {
+        sheetId: state.activeSheet.sheetId,
+        dimension,
+        length
+      }
+    }]);
+    if (dimension === "ROWS") {
+      state.rowCount += length;
+      state.activeSheet.gridProperties.rowCount = state.rowCount;
     } else {
-        await loadDatasetNavigation();
-        loadUsersData();
+      state.columnCount += length;
+      state.activeSheet.gridProperties.columnCount = state.columnCount;
     }
+    await loadGrid();
+    showStatus(`${length} ${dimension.toLowerCase()} added.`, "success");
+  } catch (error) {
+    console.error(`Unable to add ${dimension.toLowerCase()}:`, error);
+    showStatus(error.message || `Unable to add ${dimension.toLowerCase()}.`, "error");
+  }
 }
 
-// Search functionality
-function handleSearch() {
-    const searchTerm = document.getElementById('searchInput').value;
-    if (activeView === 'dataset') {
-        if (datasetPendingEdits.size > 0) {
-            document.getElementById('searchInput').value = datasetAppliedSearch;
-            showStatus('Save or discard your table edits before searching.', 'error');
-            return;
-        }
-        clearTimeout(datasetSearchTimer);
-        datasetSearchTimer = setTimeout(() => loadDatasetPage(1), 300);
-        return;
+async function updateSpreadsheet(requests) {
+  if (!state.activeSpreadsheet) {
+    throw new Error("Open a spreadsheet first.");
+  }
+  return googleApiFetch(
+    `${SHEETS_API}/spreadsheets/${encodeURIComponent(state.activeSpreadsheet.id)}:batchUpdate`,
+    {
+      method: "POST",
+      body: JSON.stringify({ requests })
     }
-    if (!hot) return;
+  );
+}
 
-    if (searchTerm) {
-        hot.search.query(searchTerm);
-    } else {
-        hot.search.query('');
+async function selectSheet(sheetId) {
+  const sheet = state.sheets.find((item) => item.sheetId === sheetId);
+  if (!sheet) return;
+
+  state.activeSheet = sheet;
+  state.pendingEdits.clear();
+  state.rowPage = 0;
+  state.columnPage = 0;
+  state.rowCount = Math.max(1, Number(sheet.gridProperties?.rowCount) || ROWS_PER_PAGE);
+  state.columnCount = Math.max(1, Number(sheet.gridProperties?.columnCount) || COLUMNS_PER_PAGE);
+  renderSheetTabs();
+  updateSaveButton();
+  await loadGrid();
+}
+
+async function loadGrid() {
+  if (!state.activeSpreadsheet || !state.activeSheet) return;
+  const requestId = ++state.gridRequest;
+  const rowStart = state.rowPage * ROWS_PER_PAGE + 1;
+  const rowEnd = Math.min(rowStart + ROWS_PER_PAGE - 1, state.rowCount);
+  const columnStart = state.columnPage * COLUMNS_PER_PAGE;
+  const columnEnd = Math.min(columnStart + COLUMNS_PER_PAGE - 1, state.columnCount - 1);
+  const range = `${quoteSheetTitle(state.activeSheet.title)}!${columnToA1(columnStart)}${rowStart}:${columnToA1(columnEnd)}${rowEnd}`;
+  elements.sheetGridStatus.textContent = "Loading cells...";
+  elements.sheetGridContainer.replaceChildren();
+
+  try {
+    const params = new URLSearchParams({ range, valueRenderOption: "FORMATTED_VALUE" });
+    const result = await googleApiFetch(
+      `${SHEETS_API}/spreadsheets/${encodeURIComponent(state.activeSpreadsheet.id)}/values/${encodeURIComponent(range)}?${params.toString()}`
+    );
+    if (requestId !== state.gridRequest) return;
+
+    const values = Array.isArray(result.values) ? result.values : [];
+    const visibleRowCount = rowEnd - rowStart + 1;
+    const visibleColumnCount = columnEnd - columnStart + 1;
+    state.gridValues = Array.from({ length: visibleRowCount }, (_, row) =>
+      Array.from({ length: visibleColumnCount }, (_, column) => {
+        const value = values[row]?.[column];
+        return value === undefined || value === null ? "" : String(value);
+      })
+    );
+
+    renderGrid(rowStart, columnStart, visibleRowCount, visibleColumnCount);
+    elements.activeSheetRange.textContent =
+      `Rows ${rowStart}–${rowEnd} · Columns ${columnToA1(columnStart)}–${columnToA1(columnEnd)}`;
+    elements.rowPageStatus.textContent = `${rowStart}–${rowEnd} of ${state.rowCount}`;
+    elements.columnPageStatus.textContent =
+      `${columnToA1(columnStart)}–${columnToA1(columnEnd)} of ${columnToA1(state.columnCount - 1)}`;
+    elements.previousRowsButton.disabled = state.rowPage === 0;
+    elements.nextRowsButton.disabled = rowEnd >= state.rowCount;
+    elements.previousColumnsButton.disabled = state.columnPage === 0;
+    elements.nextColumnsButton.disabled = columnEnd >= state.columnCount - 1;
+    elements.sheetGridStatus.textContent = "Edit cells, then choose Save changes. Unsaved cells are highlighted.";
+  } catch (error) {
+    if (requestId !== state.gridRequest) return;
+    console.error("Unable to load spreadsheet cells:", error);
+    elements.sheetGridStatus.textContent = error.message || "Unable to load spreadsheet cells.";
+    showStatus(error.message || "Unable to load spreadsheet cells.", "error");
+  }
+}
+
+function renderGrid(rowStart, columnStart, rowCount, columnCount) {
+  const table = document.createElement("table");
+  table.className = "sheet-grid";
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  const corner = document.createElement("th");
+  corner.className = "row-heading";
+  corner.textContent = "";
+  headerRow.appendChild(corner);
+
+  for (let column = 0; column < columnCount; column += 1) {
+    const heading = document.createElement("th");
+    heading.scope = "col";
+    heading.textContent = columnToA1(columnStart + column);
+    headerRow.appendChild(heading);
+  }
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (let row = 0; row < rowCount; row += 1) {
+    const tableRow = document.createElement("tr");
+    const rowHeading = document.createElement("th");
+    rowHeading.className = "row-heading";
+    rowHeading.scope = "row";
+    rowHeading.textContent = String(rowStart + row);
+    tableRow.appendChild(rowHeading);
+
+    for (let column = 0; column < columnCount; column += 1) {
+      const cell = document.createElement("td");
+      const input = document.createElement("input");
+      const absoluteRow = rowStart + row;
+      const absoluteColumn = columnStart + column;
+      input.type = "text";
+      input.value = state.gridValues[row][column];
+      input.dataset.row = String(absoluteRow);
+      input.dataset.column = String(absoluteColumn);
+      input.setAttribute("aria-label", `${columnToA1(absoluteColumn)}${absoluteRow}`);
+      cell.appendChild(input);
+      tableRow.appendChild(cell);
     }
-    hot.render();
+    tbody.appendChild(tableRow);
+  }
+  table.appendChild(tbody);
+  elements.sheetGridContainer.replaceChildren(table);
 }
 
-// Delete user from database
-async function deleteUserFromDB(userId) {
-    try {
-        await window.proFitnessApiFetch(`${API_BASE_URL}/api/users/${userId}`, {
-            method: 'DELETE'
-        });
-    } catch (error) {
-        console.error('Error deleting user:', error);
+function handleCellEdit(event) {
+  const input = event.target.closest("input[data-row][data-column]");
+  if (!input) return;
+
+  const row = Number(input.dataset.row);
+  const column = Number(input.dataset.column);
+  const visibleRow = row - (state.rowPage * ROWS_PER_PAGE + 1);
+  const visibleColumn = column - (state.columnPage * COLUMNS_PER_PAGE);
+  const originalValue = state.gridValues[visibleRow]?.[visibleColumn] ?? "";
+  const key = `${row}:${column}`;
+
+  if (input.value === originalValue) {
+    state.pendingEdits.delete(key);
+    input.classList.remove("dirty");
+  } else {
+    state.pendingEdits.set(key, { row, column, value: input.value });
+    input.classList.add("dirty");
+  }
+  updateSaveButton();
+}
+
+function confirmDiscardChanges() {
+  if (state.isSaving) {
+    showStatus("Wait for the current spreadsheet save to finish before changing sheets.", "info");
+    return false;
+  }
+  if (state.pendingEdits.size === 0) return true;
+  if (!window.confirm("Discard unsaved spreadsheet changes?")) return false;
+  state.pendingEdits.clear();
+  updateSaveButton();
+  return true;
+}
+
+function updateSaveButton() {
+  elements.saveSheetButton.disabled = state.isSaving || state.pendingEdits.size === 0;
+  elements.saveSheetButton.innerHTML = state.pendingEdits.size > 0
+    ? `<i class="fas fa-save" aria-hidden="true"></i> Save ${state.pendingEdits.size} change${state.pendingEdits.size === 1 ? "" : "s"}`
+    : '<i class="fas fa-save" aria-hidden="true"></i> Save changes';
+}
+
+async function saveSheetChanges() {
+  if (!state.pendingEdits.size || !state.activeSpreadsheet || !state.activeSheet) return;
+  state.isSaving = true;
+  updateSaveButton();
+  elements.sheetGridStatus.textContent = "Saving changes to Google Sheets...";
+
+  try {
+    const data = createUpdateRanges();
+    const result = await googleApiFetch(
+      `${SHEETS_API}/spreadsheets/${encodeURIComponent(state.activeSpreadsheet.id)}/values:batchUpdate`,
+      {
+        method: "POST",
+        body: JSON.stringify({ valueInputOption: "USER_ENTERED", data })
+      }
+    );
+    const updatedCells = result.totalUpdatedCells || 0;
+    state.pendingEdits.clear();
+    updateSaveButton();
+    await loadGrid();
+    showStatus(`${updatedCells} cell${updatedCells === 1 ? "" : "s"} saved.`, "success");
+  } catch (error) {
+    console.error("Unable to save Google Sheets changes:", error);
+    elements.sheetGridStatus.textContent = error.message || "Unable to save spreadsheet changes.";
+    showStatus(error.message || "Unable to save spreadsheet changes.", "error");
+  } finally {
+    state.isSaving = false;
+    updateSaveButton();
+  }
+}
+
+function createUpdateRanges() {
+  const cells = Array.from(state.pendingEdits.values())
+    .sort((left, right) => left.row - right.row || left.column - right.column);
+  const updates = [];
+  let run = [];
+
+  const flushRun = () => {
+    if (run.length === 0) return;
+    const row = run[0].row;
+    const firstColumn = run[0].column;
+    const lastColumn = run[run.length - 1].column;
+    const range = `${quoteSheetTitle(state.activeSheet.title)}!${columnToA1(firstColumn)}${row}:${columnToA1(lastColumn)}${row}`;
+    updates.push({ range, values: [run.map((cell) => cell.value)] });
+    run = [];
+  };
+
+  cells.forEach((cell) => {
+    const previous = run[run.length - 1];
+    if (previous && (cell.row !== previous.row || cell.column !== previous.column + 1)) {
+      flushRun();
     }
+    run.push(cell);
+  });
+  flushRun();
+  return updates;
 }
 
-// Toggle recent changes panel
-function toggleRecentChanges() {
-    const panel = document.getElementById('recentChangesPanel');
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    if (panel.style.display === 'block') {
-        updateRecentChangesDisplay();
-    }
+async function reloadActiveSheet() {
+  if (!state.activeSheet || !confirmDiscardChanges()) return;
+  await loadGrid();
 }
 
-// Update recent changes display
-function updateRecentChangesDisplay() {
-    const list = document.getElementById('recentChangesList');
-    if (recentChanges.length === 0) {
-        list.innerHTML = '<p style="color: #666; text-align: center;">No recent changes</p>';
-        return;
-    }
-
-    list.innerHTML = recentChanges.slice(0, 20).map(change => {
-        if (change.type === 'delete') {
-            return `
-                <div class="change-item">
-                    <strong>Deleted User:</strong> ${change.userId}
-                    <div class="change-time">${change.timestamp}</div>
-                </div>
-            `;
-        } else if (change.type === 'create_row') {
-            return `
-                <div class="change-item">
-                    <strong>Created New Row:</strong> Row ${change.row + 1}
-                    <div class="change-time">${change.timestamp}</div>
-                </div>
-            `;
-        } else {
-            return `
-                <div class="change-item">
-                    <strong>Row ${change.row + 1}, ${change.column}:</strong> 
-                    "${change.oldValue || '(empty)'}" → "${change.newValue || '(empty)'}"
-                    <div class="change-time">${change.timestamp}</div>
-                </div>
-            `;
-        }
-    }).join('');
+async function changePage(axis, increment) {
+  if (!confirmDiscardChanges()) return;
+  if (axis === "row") {
+    const nextPage = state.rowPage + increment;
+    const maxPage = Math.max(0, Math.ceil(state.rowCount / ROWS_PER_PAGE) - 1);
+    state.rowPage = Math.min(maxPage, Math.max(0, nextPage));
+  } else {
+    const maxPage = Math.max(0, Math.ceil(state.columnCount / COLUMNS_PER_PAGE) - 1);
+    state.columnPage = Math.min(maxPage, Math.max(0, state.columnPage + increment));
+  }
+  await loadGrid();
 }
 
-// Save recent changes to localStorage
-function saveRecentChanges() {
-    localStorage.setItem('adminRecentChanges', JSON.stringify(recentChanges));
+function columnToA1(columnIndex) {
+  let value = columnIndex + 1;
+  let label = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    label = String.fromCharCode(65 + remainder) + label;
+    value = Math.floor((value - 1) / 26);
+  }
+  return label;
 }
 
-// Load recent changes from localStorage
-function loadRecentChanges() {
-    const saved = localStorage.getItem('adminRecentChanges');
-    if (saved) {
-        recentChanges = JSON.parse(saved);
-    }
+function quoteSheetTitle(title) {
+  return `'${title.replace(/'/g, "''")}'`;
 }
 
-// Clear recent changes
-function clearRecentChanges() {
-    recentChanges = [];
-    saveRecentChanges();
-    updateRecentChangesDisplay();
-    showStatus('Recent changes cleared', 'info');
-    setTimeout(() => hideStatus(), 2000);
+function clearGoogleSession() {
+  state.spreadsheetRequest += 1;
+  state.gridRequest += 1;
+  state.accessToken = null;
+  state.spreadsheets = [];
+  state.nextPageToken = null;
+  state.activeSpreadsheet = null;
+  state.activeSheet = null;
+  state.sheets = [];
+  state.pendingEdits.clear();
+  elements.googleAccount.textContent = "";
+  sessionStorage.removeItem("adminGoogleAccessToken");
+  elements.createSpreadsheetButton.hidden = true;
+  elements.refreshSheetsButton.hidden = true;
+  elements.spreadsheetSearch.hidden = true;
+  elements.spreadsheetSearch.value = "";
+  elements.spreadsheetList.replaceChildren();
+  elements.spreadsheetWorkspace.hidden = true;
+  elements.sheetsWelcome.hidden = false;
+  elements.sheetGridContainer.replaceChildren();
+  setSpreadsheetListStatus("Sign in with Google to view spreadsheets.");
+  updateSaveButton();
 }
 
-// Show status message
+async function logout() {
+  if (!confirmDiscardChanges()) return;
+  sessionStorage.removeItem("adminGoogleAccessToken");
+  try {
+    await window.proFitnessApiFetch("/api/auth/logout", { method: "POST" });
+  } catch (error) {
+    console.error("Unable to end admin session:", error);
+    showStatus("Could not confirm sign-out with the server. You will be redirected.", "error");
+  }
+  ["adminLoggedIn", "adminEmail", "adminPhone"].forEach((key) => localStorage.removeItem(key));
+  window.location.replace("/gym.html");
+}
+
 function showStatus(message, type) {
-    const statusEl = document.getElementById('statusMessage');
-    statusEl.textContent = message;
-    statusEl.className = `status-message ${type}`;
-}
-
-// Hide status message
-function hideStatus() {
-    const statusEl = document.getElementById('statusMessage');
-    statusEl.className = 'status-message';
+  window.clearTimeout(state.statusTimer);
+  elements.adminStatus.textContent = message;
+  elements.adminStatus.className = `admin-status ${type || ""}`;
+  elements.adminStatus.hidden = false;
+  state.statusTimer = window.setTimeout(() => {
+    elements.adminStatus.hidden = true;
+  }, 7000);
 }

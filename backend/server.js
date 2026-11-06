@@ -386,6 +386,7 @@ app.use(async (req, res, next) => {
   const isUserPage = req.path === "/profile" || req.path === "/profile.html";
   const isUserManagementApi = req.path === "/api/users" ||
     req.path.startsWith("/api/users/");
+  const isAdminSessionApi = req.path === "/api/admin/session";
   const isAdminDatasetApi = req.path === "/api/admin/datasets" ||
     req.path.startsWith("/api/admin/datasets/");
 
@@ -399,6 +400,9 @@ app.use(async (req, res, next) => {
     return res.status(401).json({ success: false, message: "Admin sign-in is required." });
   }
   if (isAdminDatasetApi && !(await isAuthorizedAdminSession(session))) {
+    return res.status(401).json({ success: false, message: "Admin sign-in is required." });
+  }
+  if (isAdminSessionApi && !(await isAuthorizedAdminSession(session))) {
     return res.status(401).json({ success: false, message: "Admin sign-in is required." });
   }
   req.authSession = session;
@@ -791,7 +795,7 @@ app.get("/api/auth/google/config", (req, res) => {
 });
 
 app.post("/api/auth/google/:role", googleLoginLimiter, async (req, res) => {
-  const { credential } = req.body || {};
+  const { credential, accessToken } = req.body || {};
   const { role } = req.params;
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
@@ -801,34 +805,94 @@ app.post("/api/auth/google/:role", googleLoginLimiter, async (req, res) => {
       message: "Google sign-in is not configured on the server."
     });
   }
-  if (typeof credential !== "string" || !credential || credential.length > 8192 ||
-      !["user", "admin"].includes(role)) {
+  if (!["user", "admin"].includes(role)) {
     return res.status(400).json({
-      success: false,
-      message: "A valid Google sign-in credential is required."
+      success: false, message: "A valid Google sign-in role is required."
     });
   }
 
   let email;
-  try {
-    const ticket = await googleOAuthClient.verifyIdToken({
-      idToken: credential,
-      audience: clientId
-    });
-    const payload = ticket.getPayload();
-    email = payload?.email?.trim().toLowerCase();
-    if (!email || payload?.email_verified !== true) {
+  if (role === "admin") {
+    if (typeof accessToken !== "string" || !accessToken || accessToken.length > 8192) {
       return res.status(401).json({
         success: false,
-        message: "Use a Google account with a verified email address."
+        message: "Sign in with Google to grant spreadsheet access to your admin account."
       });
     }
-  } catch (error) {
-    console.error("Google ID token verification failed:", error.message);
-    return res.status(401).json({
-      success: false,
-      message: "Google account could not be verified. Please try again."
-    });
+
+    try {
+      const tokenInfo = await googleOAuthClient.getTokenInfo(accessToken);
+      const audience = tokenInfo.audience || tokenInfo.aud;
+      const scopes = Array.isArray(tokenInfo.scopes)
+        ? tokenInfo.scopes
+        : typeof tokenInfo.scope === "string" ? tokenInfo.scope.split(/\s+/) : [];
+      const requiredScopes = [
+        "openid",
+        "https://www.googleapis.com/auth/drive.metadata.readonly",
+        "https://www.googleapis.com/auth/spreadsheets"
+      ];
+      const emailScopeGranted = scopes.includes("email") ||
+        scopes.includes("https://www.googleapis.com/auth/userinfo.email");
+      if (audience !== clientId || !emailScopeGranted ||
+          !requiredScopes.every((scope) => scopes.includes(scope))) {
+        return res.status(401).json({
+          success: false,
+          message: "Google sign-in must include spreadsheet access. Please try again."
+        });
+      }
+
+      const userInfoResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!userInfoResponse.ok) {
+        return res.status(401).json({
+          success: false,
+          message: "Google account could not be verified. Please try again."
+        });
+      }
+      const userInfo = await userInfoResponse.json();
+      email = typeof userInfo.email === "string" ? userInfo.email.trim().toLowerCase() : "";
+      if (!email || userInfo.email_verified !== true) {
+        return res.status(401).json({
+          success: false,
+          message: "Use a Google account with a verified email address."
+        });
+      }
+    } catch (error) {
+      console.error("Google admin access token verification failed:", error.message);
+      return res.status(401).json({
+        success: false,
+        message: "Google account could not be verified. Please try again."
+      });
+    }
+  } else {
+    if (typeof credential !== "string" || !credential || credential.length > 8192) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid Google sign-in credential is required."
+      });
+    }
+
+    try {
+      const ticket = await googleOAuthClient.verifyIdToken({
+        idToken: credential,
+        audience: clientId
+      });
+      const payload = ticket.getPayload();
+      email = payload?.email?.trim().toLowerCase();
+      if (!email || payload?.email_verified !== true) {
+        return res.status(401).json({
+          success: false,
+          message: "Use a Google account with a verified email address."
+        });
+      }
+    } catch (error) {
+      console.error("Google ID token verification failed:", error.message);
+      return res.status(401).json({
+        success: false,
+        message: "Google account could not be verified. Please try again."
+      });
+    }
   }
 
   try {
@@ -1142,6 +1206,14 @@ app.post("/api/faq/search", faqSearchLimiter, async (req, res) => {
 });
 
 // ===== API Endpoints for User Management =====
+
+app.get("/api/admin/session", (req, res) => {
+  res.json({
+    success: true,
+    email: req.authSession?.email?.toLowerCase() || null,
+    canAccessGoogleSheets: Boolean(req.authSession?.email)
+  });
+});
 
 app.get("/api/admin/datasets", async (req, res) => {
   try {
