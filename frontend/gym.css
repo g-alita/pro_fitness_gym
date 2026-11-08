@@ -707,9 +707,19 @@ footer a:hover {
     font-size: 0.95rem;
   }
 
+  .section .image.image-placeholder {
+    height: auto;
+    min-height: 0;
+  }
+
   .slideshow img {
-    height: 450px;
+    display: block;
+    height: auto;
     border-radius: 10px;
+  }
+
+  .branch-image-link img {
+    height: auto;
   }
 
   /* Branches */
@@ -717,10 +727,6 @@ footer a:hover {
     grid-template-columns: 1fr;
     gap: 25px;
     padding: 0 15px;
-  }
-
-  .branch-image-link img {
-    height: 220px;
   }
 
   .branch-image {

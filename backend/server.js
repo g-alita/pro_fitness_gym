@@ -153,15 +153,23 @@ async function sendContactNotification(enquiry) {
   await response.arrayBuffer();
 }
 
-app.use(express.static(FRONTEND_DIR));
+const pageRoutes = {
+  gym: "gym.html",
+  services: "services.html",
+  gallery: "gallery.html",
+  teams: "teams.html",
+  contact: "contact.html",
+  faq: "faq.html",
+  packages_matwari: "packages_matwari.html"
+};
 
-app.get("/", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
-app.get("/gym", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
-app.get("/services", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "services.html")));
-app.get("/gallery", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gallery.html")));
-app.get("/teams", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "teams.html")));
-app.get("/contact", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "contact.html")));
-app.get("/faq", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "faq.html")));
+app.get("/", (req, res) => res.sendFile(path.join(FRONTEND_DIR, pageRoutes.gym)));
+for (const [route, file] of Object.entries(pageRoutes)) {
+  app.get(`/${route}`, (req, res) => res.sendFile(path.join(FRONTEND_DIR, file)));
+  app.get(`/${file}`, (req, res) => res.redirect(308, `/${route}${req.url.slice(file.length + 1)}`));
+}
+
+app.use(express.static(FRONTEND_DIR));
 
 app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
   const {
