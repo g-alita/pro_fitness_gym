@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#174aab">
+  <title>Member Dashboard | Pro Fitness</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- member-dashboard.css now contains the navbar + footer styles from gym.css.
+       gym.css is NOT linked here because its global h1/h2/p/ul rules would break the dashboard layout. -->
+  <link rel="stylesheet" href="member-dashboard.css">
+  <link rel="stylesheet" href="chatbot.css">
+</head>
+
+<body>
+  <!-- ============ NAVBAR (same as gym.html) ============ -->
+  <nav class="site-nav" id="siteNav">
+    <span><img src="photos/logo.png" alt="pro_fitness_logo"></span>
+    <button class="hamburger" id="menuToggle" type="button" aria-label="Toggle navigation menu"
+      aria-controls="navLinks" aria-expanded="false">
+      <i class="fas fa-bars"></i>
+    </button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/gym"><i class="fas fa-home"></i> Home</a></li>
+      <li><a href="/teams"><i class="fas fa-users"></i> Our Team</a></li>
+      <li><a href="/services"><i class="fas fa-dumbbell"></i> Services</a></li>
+      <li><a href="/gallery"><i class="fas fa-images"></i> Gallery</a></li>
+      <li><a href="/contact"><i class="fas fa-envelope"></i> Contact</a></li>
+      <li><a href="/faq"><i class="fas fa-question-circle"></i> FAQ</a></li>
+    </ul>
+  </nav>
+
+  <main class="page-wrap">
+    <section class="welcome-banner">
+      <div class="welcome-copy">
+        <span class="eyebrow light">MEMBER PORTAL</span>
+        <h1>Welcome back, <span id="welcomeName">Anjali</span>!</h1>
+        <p>Your fitness journey, all in one place.</p>
+      </div>
+      <div class="banner-mark"><i class="fa-solid fa-dumbbell"></i></div>
+    </section>
+
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">YOUR ACCOUNT</span>
+        <h2>Member dashboard</h2>
+        <p>Manage your membership and personal details.</p>
+      </div>
+      <span class="member-chip"><i class="fa-solid fa-shield-halved"></i> Member account</span>
+    </div>
+
+    <section class="overview-grid" aria-label="Membership summary">
+      <article class="summary-card plan-card">
+        <div class="summary-icon"><i class="fa-solid fa-id-card"></i></div>
+        <div><span class="card-label">CURRENT PLAN</span>
+          <h3 id="planName">Half Yearly</h3><span class="status-pill active" id="membershipStatus">Active</span>
+        </div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-icon"><i class="fa-regular fa-calendar-check"></i></div>
+        <div><span class="card-label">MEMBERSHIP EXPIRES</span>
+          <h3 id="expiryDate">01 March 2027</h3><span class="muted" id="daysRemaining">124 days remaining</span>
+        </div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-icon"><i class="fa-solid fa-wallet"></i></div>
+        <div><span class="card-label">PAYMENT STATUS</span>
+          <h3 id="paymentStatus">Paid</h3><span class="muted" id="paymentAmount">₹6,500 membership fee</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <div class="main-column">
+        <article class="panel membership-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">SUBSCRIPTION</span>
+              <h2>Membership details</h2>
+            </div>
+            <span class="panel-icon"><i class="fa-solid fa-file-contract"></i></span>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-item"><span>Member ID</span><strong id="memberId">PF-2026-001</strong></div>
+            <div class="detail-item"><span>Membership plan</span><strong id="detailPlan">Half Yearly</strong></div>
+            <div class="detail-item"><span>Start date</span><strong id="startDate">01 September 2026</strong></div>
+            <div class="detail-item"><span>Expiry date</span><strong id="detailExpiry">01 March 2027</strong></div>
+            <div class="detail-item"><span>Membership amount</span><strong id="detailAmount">₹6,500</strong></div>
+            <div class="detail-item"><span>Payment status</span><strong class="paid-text"
+                id="detailPayment">Paid</strong></div>
+          </div>
+          <div class="progress-area">
+            <div class="progress-caption"><span>Membership progress</span><strong id="progressLabel">33% used</strong>
+            </div>
+            <div class="progress-track"><span id="progressBar" style="width:33%"></span></div>
+            <p id="progressHint">Keep showing up. Every workout counts.</p>
+          </div>
+        </article>
+
+        <article class="panel pause-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">TAKE A BREAK</span>
+              <h2>Pause membership</h2>
+            </div>
+            <span class="panel-icon"><i class="fa-regular fa-circle-pause"></i></span>
+          </div>
+          <p class="panel-description">Need some time away? Send a pause request to the Pro Fitness team. Your
+            membership will remain active until the request is reviewed and approved.</p>
+          <div class="notice"><i class="fa-solid fa-circle-info"></i><span>Once approved, your membership expiry date
+              will be extended by the number of approved pause days.</span></div>
+          <div id="pauseRequestStatus" class="request-status hidden" role="status"></div>
+          <button class="primary-btn" id="openPauseModal"><i class="fa-solid fa-pause"></i> Request membership
+            pause</button>
+        </article>
+      </div>
+
+      <aside class="side-column">
+        <article class="panel profile-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">YOUR PROFILE</span>
+              <h2>Personal details</h2>
+            </div>
+            <span class="panel-icon"><i class="fa-regular fa-user"></i></span>
+          </div>
+          <div class="profile-avatar" id="avatarInitials">A</div>
+          <h3 class="profile-name" id="profileName">Anjali Kumari</h3>
+          <p class="profile-subtitle">Pro Fitness Member</p>
+          <div class="profile-info">
+            <div><i class="fa-regular fa-envelope"></i><span id="memberEmail">anjali@example.com</span></div>
+            <div><i class="fa-solid fa-phone"></i><span id="memberPhone">+91 98765 43210</span></div>
+          </div>
+          <button class="secondary-btn full-btn" id="editProfileBtn"><i class="fa-regular fa-pen-to-square"></i> Edit
+            profile</button>
+        </article>
+
+        <article class="panel security-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">ACCOUNT SECURITY</span>
+              <h2>Login credentials</h2>
+            </div>
+            <span class="panel-icon"><i class="fa-solid fa-lock"></i></span>
+          </div>
+          <div class="credential-row"><span>Email / username</span><strong
+              id="credentialEmail">anjali@example.com</strong></div>
+          <div class="credential-row"><span>Password</span><strong>••••••••••••</strong></div>
+          <p class="security-note">Your password is protected and is never displayed here.</p>
+          <button class="secondary-btn full-btn" id="changePasswordBtn"><i class="fa-solid fa-key"></i> Change
+            password</button>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER============ -->
+  <footer id="footer" class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-col footer-brand">
+        <img src="photos/logo.png" alt="Pro Fitness logo">
+        <div class="footer-brand-name">Pro Fitness</div>
+        <p>Empowering you to achieve your fitness goals with expert guidance and top-notch facilities.</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contact Us</h4>
+        <p><a href="mailto:profitnessgym26@gmail.com">profitnessgym26@gmail.com</a></p>
+        <p>Phone: +91 9508128298 , +91 0654645503</p>
+        <p>Address: Pro Fitness Gym, Bhuian Tola, Matwari Opp. Gandhi Maidan, Hazaribagh-825301</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="socials">
+          <a href="https://www.instagram.com/pro_fitness_gym_hazaribagh?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+            target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer-bottom">&copy; <span id="year"></span> Pro Fitness Gym. All rights reserved.</div>
+  </footer>
+
+  <!-- ============ CHATBOT (same as gym.html) ============ -->
+  <div class="chat-button" onclick="toggleChat()">
+    <i class="fas fa-comments"></i>
+  </div>
+
+  <div class="chat-container" id="chatContainer">
+    <div class="chat-header">
+      <h3><i class="fas fa-dumbbell"></i> Pro Fitness Assistant</h3>
+      <span class="close-btn" onclick="toggleChat()">×</span>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">
+        <div class="message-content">
+          👋 Hi! I'm your Pro Fitness virtual assistant. How can I help you today?
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-options" id="quickOptions">
+      <button class="quick-btn" onclick="sendQuickMessage('membership')">Membership Plans</button>
+      <button class="quick-btn" onclick="sendQuickMessage('timings')">Gym Timings</button>
+      <button class="quick-btn" onclick="sendQuickMessage('trial')">Free Trial</button>
+      <button class="quick-btn" onclick="sendQuickMessage('location')">Location</button>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+      <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <!-- Pause request dialog -->
+  <div class="modal-backdrop" id="pauseModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <button class="modal-close" data-close-modal aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      <span class="modal-symbol"><i class="fa-regular fa-calendar-xmark"></i></span>
+      <span class="eyebrow">MEMBERSHIP REQUEST</span>
+      <h2 id="pauseTitle">Request a pause</h2>
+      <p class="modal-intro">Choose the dates you would like your membership to be paused. The gym team will review your
+        request.</p>
+      <form id="pauseForm">
+        <label for="pauseStart">Pause start date</label>
+        <input type="date" id="pauseStart" required>
+        <label for="pauseEnd">Pause end date</label>
+        <input type="date" id="pauseEnd" required>
+        <label for="pauseReason">Reason (optional)</label>
+        <textarea id="pauseReason" rows="3" placeholder="Tell us briefly why you need a pause..."></textarea>
+        <p class="form-error" id="pauseError" role="alert"></p>
+        <button class="primary-btn full-btn" type="submit">Submit pause request</button>
+      </form>
+      <p class="modal-footnote"><i class="fa-solid fa-circle-info"></i> This request does not pause your membership
+        until approved.</p>
+    </section>
+  </div>
+
+  <!-- Profile dialog -->
+  <div class="modal-backdrop" id="profileModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <button class="modal-close" data-close-modal aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      <span class="eyebrow">PERSONAL INFORMATION</span>
+      <h2 id="profileModalTitle">Edit profile</h2>
+      <form id="profileForm">
+        <label for="editName">Full name</label><input id="editName" required>
+        <label for="editEmail">Email address</label><input id="editEmail" type="email" required>
+        <label for="editPhone">Phone number</label><input id="editPhone" type="tel" required>
+        <p class="form-error" id="profileError" role="alert"></p>
+        <button class="primary-btn full-btn" type="submit">Save changes</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- Change password dialog -->
+  <div class="modal-backdrop" id="passwordModal" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+      <button class="modal-close" data-close-modal aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      <span class="eyebrow">ACCOUNT SECURITY</span>
+      <h2 id="passwordModalTitle">Change password</h2>
+      <form id="passwordForm">
+        <label for="currentPassword">Current password</label><input id="currentPassword" type="password"
+          autocomplete="current-password" required>
+        <label for="newPassword">New password</label><input id="newPassword" type="password" minlength="8"
+          autocomplete="new-password" required>
+        <label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password"
+          minlength="8" autocomplete="new-password" required>
+        <p class="form-error" id="passwordError" role="alert"></p>
+        <button class="primary-btn full-btn" type="submit">Update password</button>
+      </form>
+      <p class="modal-footnote">Password updates must be securely verified by the server when backend authentication is
+        connected.</p>
+    </section>
+  </div>
+
+  <!-- Chatbot scripts (same as gym.html). gym.js is not loaded: its slideshow code targets
+       elements that only exist on the home page. Its navbar behaviour is in member-dashboard.js. -->
+  <script src="faq-data.js"></script>
+  <script src="chatbot.js"></script>
+  <script src="member-dashboard.js"></script>
+</body>
+
+</html>

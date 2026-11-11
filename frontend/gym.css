@@ -279,6 +279,7 @@ nav.scrolled img {
 }
 
 .section-title {
+  text-align: center;
   margin-bottom: 50px;
   font-size: 2.5rem;
   letter-spacing: 2px;
@@ -373,38 +374,38 @@ nav.scrolled img {
 /* Coming Soon Branch */
 
 .coming-soon-card .branch-image-link {
-    position: relative;
-    cursor: default;
+  position: relative;
+  cursor: default;
 }
 
 .coming-soon-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.45);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .coming-soon-overlay span {
-    padding: 12px 25px;
-    color: #fff;
-    font-family: "Poppins", sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    border: 2px solid #fff;
-    border-radius: 5px;
-    transform: rotate(-5deg);
+  padding: 12px 25px;
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  border: 2px solid #fff;
+  border-radius: 5px;
+  transform: rotate(-5deg);
 }
 
 .branch-status-text {
-    display: inline-block;
-    margin-top: 12px;
-    color: var(--brand);
-    font-family: "Poppins", sans-serif;
-    font-size: 13px;
-    font-weight: 600;
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--brand);
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 
@@ -590,7 +591,37 @@ footer a:hover {
    ========================================================================== */
 
 /* ---- Tablet / small laptop ---- */
+/* ==========================================================================
+   9. RESPONSIVE  (largest breakpoint first, each in page order)
+   ========================================================================== */
+
+/* ---- Tablet / small laptop ---- */
 @media (max-width: 1024px) {
+
+  /* Hero */
+  .content {
+    padding: 0 20px;
+    text-align: center;
+  }
+
+  .content h1 {
+    display: block;
+    margin: 0 0 30px;
+    font-size: clamp(2.2rem, 8vw, 5rem);
+    line-height: 1.2;
+  }
+
+  .content p {
+    margin: 0;
+    text-align: center;
+  }
+
+  .content a {
+    display: inline-block;
+    margin-left: 0;
+  }
+
+  /* Content sections */
   .section {
     flex-direction: column;
     width: 95%;
@@ -604,14 +635,22 @@ footer a:hover {
     margin: 15px 0;
   }
 
+  .section .image-placeholder {
+    height: auto;
+    min-height: 0;
+  }
+
   .section h2 {
     margin: 10px 0;
     font-size: 1.8rem;
   }
 
+  .section p {
+    margin: 10px 0;
+  }
+
   .section ul {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin: 10px auto !important;
   }
 
   .slideshow img {
@@ -620,9 +659,18 @@ footer a:hover {
   }
 }
 
+/* ---- Branches: 2 columns ---- */
 @media (max-width: 900px) {
   .branches-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
+  }
+
+  /* lone 3rd card sits centred on its own row */
+  .branch-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 420px;
   }
 }
 
@@ -632,6 +680,14 @@ footer a:hover {
   /* Navbar */
   .hamburger {
     display: block;
+    padding: 8px;
+  }
+
+  nav.scrolled {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: none;
+    /* keeps fixed menu relative to the screen */
+    -webkit-backdrop-filter: none;
   }
 
   .nav-links {
@@ -639,13 +695,22 @@ footer a:hover {
     top: 100px;
     right: -100%;
     flex-direction: column;
+    align-items: stretch;
     gap: 0;
-    width: 250px;
+    width: min(250px, 80vw);
     height: calc(100vh - 100px);
+    height: calc(100dvh - 100px);
     padding: 30px 20px;
+    overflow-y: auto;
     background: rgba(30, 30, 30, 0.98);
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
     transition: right 0.4s ease;
+  }
+
+  nav.scrolled .nav-links {
+    top: 70px;
+    height: calc(100vh - 70px);
+    height: calc(100dvh - 70px);
   }
 
   .nav-links.show {
@@ -662,11 +727,12 @@ footer a:hover {
   /* Hero */
   .main {
     height: 90vh;
+    height: 90svh;
     padding: 0 10px;
   }
 
   .content h1 {
-    font-size: 3rem;
+    font-size: 4rem;
     line-height: 1.3;
   }
 
@@ -707,46 +773,50 @@ footer a:hover {
     font-size: 0.95rem;
   }
 
-  .section .image.image-placeholder {
-    height: auto;
-    min-height: 0;
-  }
-
   .slideshow img {
     display: block;
     height: auto;
+    max-height: 420px;
     border-radius: 10px;
   }
 
-  .branch-image-link img {
-    height: auto;
+  /* Branches */
+  .branches-section {
+    padding: 40px 10px;
   }
 
-  /* Branches */
   .branches-container {
     grid-template-columns: 1fr;
     gap: 25px;
     padding: 0 15px;
   }
 
-  .branch-image {
-    height: 230px;
+  .branch-card:last-child:nth-child(odd) {
+    grid-column: auto;
+    max-width: none;
+  }
+
+  .branch-image-link img {
+    height: auto;
+  }
+
+  .branch-info {
+    padding: 18px;
   }
 
   .branch-info h3 {
     font-size: 28px;
   }
 
-  .branches-heading h2 {
-    font-size: 32px;
-  }
-
-  .branches-heading p {
-    font-size: 13px;
+  .section-title {
+    margin-bottom: 30px;
+    margin-right: 10px;
+    margin-left: 10px;
+    font-size: 1.8rem;
   }
 
   /* Team */
-  .team > h2 {
+  .team>h2 {
     margin-left: 0;
     margin-right: 0;
     font-size: 1.8rem;
@@ -767,6 +837,16 @@ footer a:hover {
     width: 80%;
     max-width: 300px;
   }
+
+  /* Testimonials, CTA, footer: remove the global 80px p margin */
+  .cta {
+    padding: 20px 10px;
+  }
+
+  .testimonial p,
+  footer p {
+    margin: 10px 0 0;
+  }
 }
 
 /* ---- Small phones ---- */
@@ -782,6 +862,7 @@ footer a:hover {
 
   .main {
     height: 85vh;
+    height: 85svh;
     padding: 0 8px;
   }
 
@@ -811,5 +892,13 @@ footer a:hover {
   .section ul li {
     margin: 5px 0;
     font-size: 0.9rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .team-section h1 {
+    font-size: 1.6rem;
   }
 }

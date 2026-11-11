@@ -7,7 +7,7 @@
 }
 
 body {
-  background: #f5f8fc;
+   background-color: rgba(226, 226, 227, 0.695);
   color: var(--faq-text);
 }
 

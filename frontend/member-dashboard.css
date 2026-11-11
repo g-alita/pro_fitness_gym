@@ -1,0 +1,210 @@
+/* ==========================================================================
+   Pro Fitness - Member dashboard stylesheet
+   1 Base · 2 Navbar (from gym.css) · 3 Dashboard · 4 Footer (from gym.css)
+   5 Modals · 6 Responsive
+   Chatbot styles live in chatbot.css
+   ========================================================================== */
+
+/* ==========================================================================
+   1. BASE
+   ========================================================================== */
+*{box-sizing:border-box}
+:root{
+  --blue:#2459f5;--blue-dark:#174aab;--navy:#202b3d;--muted:#71809a;--bg:#f0f1f4;--line:#e9edf4;--white:#fff;--green:#16865b;--shadow:0 10px 30px rgba(25,54,105,.07);
+  /* shared with gym.css */
+  --brand:hsl(223 98% 45% / 0.8);--brand-dark:#1745c0;--nav-hover:#5c5c5c;--nav-h:100px
+}
+body{margin:0;padding-top:var(--nav-h);background:var(--bg);color:var(--navy);font-family:'Poppins',sans-serif;font-size:14px}
+
+/* ==========================================================================
+   2. NAVBAR  (fixed, transparent -> dark on scroll, hamburger drawer on mobile)
+   ========================================================================== */
+.site-nav{
+  position:fixed;top:0;left:0;width:100%;height:100px;padding:0 40px;
+  display:flex;justify-content:space-between;align-items:center;
+  background:transparent;z-index:1000;
+  transition:height .3s ease,padding .3s ease,background .3s ease
+}
+.site-nav.scrolled{
+  height:70px;padding:0 30px;background:rgba(30,30,30,.85);
+  box-shadow:0 2px 20px rgba(0,0,0,.4);backdrop-filter:blur(10px)
+}
+.site-nav img{display:block;width:auto;height:70px;transition:height .3s ease}
+.site-nav.scrolled img{height:55px}
+.nav-links{display:flex;align-items:center;gap:30px;list-style:none;margin:0;padding:0}
+.nav-links a{
+  display:flex;align-items:center;gap:8px;
+  font-family:"Baloo Bhai 2",cursive;font-size:16px;font-weight:400;
+  color:var(--brand);text-decoration:none;transition:color .3s ease
+}
+.nav-links a:hover{color:var(--nav-hover)}
+.hamburger{
+  display:none;padding:8px;border:0;background:none;
+  font-size:28px;color:var(--brand);cursor:pointer;z-index:1001
+}
+
+/* ==========================================================================
+   3. DASHBOARD
+   ========================================================================== */
+.page-wrap{width:min(1200px,calc(100% - 40px));margin:30px auto 0}
+.welcome-banner{min-height:205px;border-radius:20px;padding:38px 48px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;position:relative;background:linear-gradient(115deg,#10479d,#0b347c 72%,#174aab);color:#fff;box-shadow:0 12px 28px rgba(17,65,145,.12)}
+.welcome-banner:before,.welcome-banner:after{content:"";position:absolute;border:35px solid rgba(255,255,255,.045);width:250px;height:250px;border-radius:50%;right:-90px;bottom:-190px}
+.welcome-banner:after{right:auto;left:-160px;top:-205px;bottom:auto;width:280px;height:280px}
+.welcome-copy,.banner-mark{position:relative;z-index:1}
+.eyebrow{display:block;font-size:10px;font-weight:800;letter-spacing:2px;color:var(--blue);margin-bottom:7px}
+.eyebrow.light{color:#bcd2ff}
+.welcome-banner h1{font-size:clamp(27px,4vw,39px);line-height:1.2;margin:7px 0 8px;font-weight:800}
+.welcome-banner p{margin:0;color:#dce8ff;font-size:14px}
+.banner-mark{width:100px;height:100px;border-radius:27px;background:rgba(255,255,255,.11);display:grid;place-items:center;font-size:43px;color:#b9d1ff;transform:rotate(-10deg);margin-right:25px}
+.section-heading{display:flex;justify-content:space-between;align-items:end;margin:38px 0 19px}
+.section-heading h2{font-size:25px;margin:0 0 4px}
+.section-heading p{margin:0;color:var(--muted)}
+.member-chip{background:#e5edff;color:var(--blue-dark);border-radius:30px;padding:9px 14px;font-size:12px;font-weight:600}
+.overview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:20px}
+.summary-card,.panel{background:var(--white);border:1px solid rgba(220,227,239,.75);border-radius:15px;box-shadow:var(--shadow)}
+.summary-card{padding:22px;display:flex;align-items:center;gap:16px;min-height:118px}
+.summary-icon,.panel-icon{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:13px;background:#edf3ff;color:var(--blue);font-size:19px}
+.card-label{font-size:9px;letter-spacing:1.3px;color:var(--muted);font-weight:700}
+.summary-card h3{font-size:19px;margin:4px 0 5px}
+.status-pill{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.status-pill.active{background:#e6f7ef;color:var(--green)}
+.status-pill.pending{background:#fff4dc;color:#a76a00}
+.status-pill.paused{background:#e9efff;color:var(--blue-dark)}
+.muted{font-size:11px;color:var(--muted)}
+.content-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,1fr);gap:20px}
+.main-column,.side-column{display:flex;flex-direction:column;gap:20px}
+.panel{padding:25px}
+.panel-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.panel-heading h2{font-size:19px;margin:0}
+.panel-heading .eyebrow{margin-bottom:3px}
+.panel-icon{width:40px;height:40px;flex-basis:40px;font-size:16px}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0 24px}
+.detail-item{padding:13px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
+.detail-item span,.credential-row span{color:var(--muted);font-size:11px}
+.detail-item strong{font-size:13px;font-weight:600}
+.paid-text{color:var(--green)}
+.progress-area{margin-top:23px}
+.progress-caption{display:flex;justify-content:space-between;font-size:11px;margin-bottom:9px}
+.progress-caption strong{color:var(--blue)}
+.progress-track{height:8px;background:#edf1f7;border-radius:20px;overflow:hidden}
+.progress-track span{height:100%;display:block;border-radius:20px;background:linear-gradient(90deg,#2459f5,#65a0ff)}
+.progress-area p{font-size:10px;color:var(--muted);margin:9px 0 0}
+.panel-description{color:#66748d;line-height:1.8;font-size:12px;margin:-5px 0 15px}
+.notice{display:flex;gap:10px;background:#eff4ff;color:#425b89;padding:13px;border-radius:10px;font-size:11px;line-height:1.6;margin-bottom:18px}
+.notice i{color:var(--blue);margin-top:2px}
+.primary-btn,.secondary-btn{font:600 12px 'Poppins',sans-serif;border-radius:9px;padding:12px 17px;cursor:pointer;transition:.2s}
+.primary-btn{background:var(--blue);border:1px solid var(--blue);color:#fff;box-shadow:0 5px 12px rgba(36,89,245,.16)}
+.primary-btn:hover{background:#1748d5;transform:translateY(-1px)}
+.secondary-btn{background:#fff;border:1px solid #dbe4f4;color:var(--blue)}
+.secondary-btn:hover{background:#f4f7ff}
+.full-btn{width:100%}
+.profile-panel{text-align:center}
+.profile-panel .panel-heading,.security-panel .panel-heading{text-align:left}
+.profile-avatar{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px;background:linear-gradient(135deg,#2459f5,#8ab2ff);color:#fff;font-size:27px;font-weight:700;border:4px solid #edf3ff}
+.profile-name{font-size:17px;margin:0}
+.profile-subtitle{font-size:10px;color:var(--muted);margin:3px 0 18px}
+.profile-info{text-align:left;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:13px 0;margin-bottom:16px;display:grid;gap:12px}
+.profile-info div{display:flex;align-items:center;gap:10px;font-size:11px;color:#52617b;overflow-wrap:anywhere}
+.profile-info i{color:var(--blue);width:15px}
+.credential-row{display:flex;flex-direction:column;gap:5px;padding:12px 0;border-bottom:1px solid var(--line)}
+.credential-row strong{font-size:12px;overflow-wrap:anywhere}
+.security-note{font-size:10px;color:var(--muted);line-height:1.6;margin:12px 0 15px}
+.request-status{padding:11px 13px;border-radius:9px;font-size:11px;line-height:1.6;margin:0 0 14px;background:#fff5e4;color:#946200}
+.request-status.success{background:#e8f7ef;color:#16714d}
+.hidden{display:none!important}
+
+/* ==========================================================================
+   4. FOOTER  (content and colours from gym.html / gym.css)
+   ========================================================================== */
+.site-footer{margin-top:40px;padding:40px 20px 0;font-family:"Baloo Bhai 2",cursive;color:#000}
+.footer-grid{display:flex;flex-wrap:wrap;justify-content:space-around;max-width:1200px;margin:0 auto}
+.footer-col{flex:1 1 200px;margin:20px;text-align:center}
+.footer-col h4{margin:5px 0 0;font-family:"Baloo Bhai 2",cursive;font-size:18px;font-weight:700;color:var(--brand)}
+.footer-col p{margin:10px 0 0;font-size:16px;line-height:1.5;color:#000}
+.footer-col a{color:#000;text-decoration:none;transition:color .3s ease}
+.footer-col a:hover{color:var(--brand)}
+.footer-col p a{color:var(--nav-hover)}
+.footer-col p a:hover{color:var(--brand)}
+.footer-brand{text-align:left}
+.footer-brand img{display:block;width:50px;height:auto}
+.footer-brand-name{margin-top:6px;font-weight:700;color:var(--brand)}
+.socials a{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-size:16px}
+.footer-bottom{max-width:1200px;margin:20px auto 0;padding:20px 0 30px;border-top:1px solid #444;text-align:center;font-size:15px}
+
+/* ==========================================================================
+   5. MODALS
+   ========================================================================== */
+.modal-backdrop{position:fixed;inset:0;background:rgba(14,27,51,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:2000}
+.modal-backdrop.open{display:flex}
+.modal{position:relative;background:#fff;border-radius:17px;padding:30px;width:min(100%,470px);max-height:90vh;overflow:auto;box-shadow:0 25px 80px rgba(0,0,0,.2)}
+.modal h2{font-size:23px;margin:0 0 8px}
+.modal-intro{font-size:11px;line-height:1.7;color:var(--muted);margin:0 0 19px}
+.modal-close{position:absolute;right:18px;top:17px;border:0;background:#f0f3f9;color:#56647c;width:32px;height:32px;border-radius:50%;cursor:pointer}
+.modal-symbol{width:46px;height:46px;border-radius:13px;background:#edf3ff;color:var(--blue);display:grid;place-items:center;font-size:19px;margin-bottom:15px}
+.modal form{display:flex;flex-direction:column;gap:8px}
+.modal label{font-size:11px;font-weight:600;margin-top:7px}
+.modal input,.modal textarea{font:12px 'Poppins',sans-serif;border:1px solid #dce3ee;border-radius:8px;padding:11px;color:var(--navy);outline:none;width:100%;background:#fff}
+.modal input:focus,.modal textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(36,89,245,.09)}
+.modal textarea{resize:vertical}
+.form-error{font-size:11px;color:#c33b48;min-height:15px;margin:0}
+.modal-footnote{font-size:10px;line-height:1.6;color:var(--muted);margin:15px 0 0}
+.modal-footnote i{color:var(--blue);margin-right:4px}
+
+/* ==========================================================================
+   6. RESPONSIVE (largest breakpoint first)
+   ========================================================================== */
+@media(max-width:900px){
+  .content-grid{grid-template-columns:1fr}
+  .side-column{display:grid;grid-template-columns:1fr 1fr}
+  .overview-grid{gap:12px}
+  .summary-card{padding:17px;gap:11px}
+}
+
+/* ---- Mobile: navbar becomes a slide-in drawer (same as gym.css) ---- */
+@media(max-width:768px){
+  .hamburger{display:block}
+  .site-nav.scrolled{background:rgba(30,30,30,.95);backdrop-filter:none;-webkit-backdrop-filter:none}
+  .nav-links{
+    position:fixed;top:100px;right:-100%;flex-direction:column;align-items:stretch;gap:0;
+    width:min(250px,80vw);height:calc(100vh - 100px);height:calc(100dvh - 100px);
+    padding:30px 20px;overflow-y:auto;background:rgba(30,30,30,.98);
+    box-shadow:-5px 0 15px rgba(0,0,0,.3);transition:right .4s ease
+  }
+  .site-nav.scrolled .nav-links{top:70px;height:calc(100vh - 70px);height:calc(100dvh - 70px)}
+  .nav-links.show{right:0}
+  .nav-links a{justify-content:flex-start;width:100%;padding:15px 10px;border-bottom:1px solid rgba(53,189,242,.2)}
+  .footer-brand{text-align:center}
+  .footer-brand img{margin:0 auto}
+}
+
+@media(max-width:680px){
+  .page-wrap{width:calc(100% - 28px);margin-top:18px}
+  .welcome-banner{min-height:170px;padding:28px 23px;border-radius:15px}
+  .welcome-banner h1{font-size:27px}
+  .welcome-banner p{font-size:11px}
+  .banner-mark{width:65px;height:65px;font-size:28px;margin:0 2px 0 10px;border-radius:19px}
+  .section-heading{margin:28px 0 15px;align-items:flex-start;gap:10px}
+  .section-heading h2{font-size:21px}
+  .section-heading p{font-size:11px}
+  .member-chip{font-size:9px;padding:7px 9px;white-space:nowrap}
+  .overview-grid{grid-template-columns:1fr;gap:10px}
+  .summary-card{min-height:92px;padding:16px}
+  .summary-card h3{font-size:17px}
+  .content-grid{gap:13px}
+  .main-column,.side-column{gap:13px}
+  .side-column{display:flex}
+  .panel{padding:19px}
+  .panel-heading h2{font-size:17px}
+  .detail-grid{gap:0 14px}
+  .detail-item strong{font-size:11px}
+  .modal{padding:25px 21px}
+  .site-footer{padding-top:20px}
+  .footer-col{margin:12px}
+}
+
+@media(max-width:480px){
+  .site-nav{padding:0 15px}
+  .site-nav img{height:50px}
+}
+
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
