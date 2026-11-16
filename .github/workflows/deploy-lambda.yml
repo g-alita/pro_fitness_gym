@@ -1,0 +1,46 @@
+
+name: Deploy Backend to AWS Lambda
+
+on:
+  push:
+    branches:
+      - publish1
+    paths:
+      - 'profitnessgym/backend/**'
+      - '.github/workflows/deploy-lambda.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ap-southeast-2
+
+      - name: Install dependencies
+        working-directory: profitnessgym/backend
+        run: npm ci --omit=dev
+
+      - name: Package backend
+        run: |
+          cd profitnessgym/backend
+          zip -r "$GITHUB_WORKSPACE/lambda.zip" . \
+            -x ".env" \
+            -x ".git/*"
+
+      - name: Deploy to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name profitnessgym \
+            --zip-file fileb://lambda.zip
