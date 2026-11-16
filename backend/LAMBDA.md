@@ -1,5 +1,5 @@
 # AWS Lambda backend
-
+//ytytytyt//
 - The `backend/` directory is a standalone API package. It does not require the repository root or `frontend/` at runtime; host the website separately and point `frontend/api-config.js` at this API.
 - Use the Node.js 22.x Lambda runtime and set the handler to `lambda.handler`.
 - From PowerShell, build a deployment zip containing the backend files and installed dependencies:
