@@ -179,6 +179,9 @@
         localStorage.removeItem('userLoggedIn');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userPhone');
+        localStorage.removeItem('staffLoggedIn');
+        localStorage.removeItem('staffEmail');
+        localStorage.removeItem('staffPhone');
         window.location.href = 'admin.html';
       } catch (error) {
         console.error('Admin email sign-in code verification failed:', error);

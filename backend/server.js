@@ -1,8 +1,10 @@
 // ===== Import Dependencies =====
 const path = require("path");
+const fs = require("fs");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const express = require("express");
-const ProFitnessFAQ = require("../frontend/faq-data");
+const ProFitnessFAQ = require("./faq-data");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -20,11 +22,13 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const FRONTEND_DIR = path.join(__dirname, "..", "frontend");
+const hasFrontend = fs.existsSync(FRONTEND_DIR);
 const googleOAuthClient = new OAuth2Client();
 const ADMIN_DATA_DATABASE_NAME = "profitnessgym";
 const ADMIN_EMAIL_COLLECTION_NAME = "admin mail";
 const USER_EMAIL_COLLECTION_NAME = "user mail";
 const USER_PHONE_COLLECTION_NAME = "user number";
+const STAFF_ALLOWLIST_COLLECTION_NAME = "staff_allowlist";
 const USER_PHONE_AUTHENTICATOR_COLLECTION_NAME = "user_phone_authenticators";
 const PHONE_LOGIN_OTP_COLLECTION_NAME = "phone_login_otps";
 const PHONE_OTP_LIFETIME_MS = 10 * 60 * 1000;
@@ -54,7 +58,8 @@ const ADMIN_HIDDEN_COLLECTIONS = new Set([
   PHONE_LOGIN_OTP_COLLECTION_NAME,
   "user_phone_enrollment_tokens",
   USER_EMAIL_OTP_COLLECTION_NAME,
-  ADMIN_EMAIL_OTP_COLLECTION_NAME
+  ADMIN_EMAIL_OTP_COLLECTION_NAME,
+  STAFF_ALLOWLIST_COLLECTION_NAME
 ]);
 const ADMIN_DATASET_LABELS = {
   "members sheet 1": "Members Sheet 1",
@@ -153,6 +158,15 @@ async function isUserPhoneAllowlisted(phone) {
   }));
 }
 
+async function isStaffPhoneAllowlisted(phone) {
+  const normalizedPhone = normalizeIndianMobile(phone);
+  if (!normalizedPhone) return false;
+  return Boolean(await StaffAllowlist.exists({
+    phone: normalizedPhone,
+    enabled: { $ne: false }
+  }));
+}
+
 async function isPhoneAllowlisted(role, phone) {
   if (role === "admin") {
     return Boolean(await AdminAllowlist.exists({
@@ -160,6 +174,7 @@ async function isPhoneAllowlisted(role, phone) {
       enabled: { $ne: false }
     }));
   }
+  if (role === "staff") return isStaffPhoneAllowlisted(phone);
   return isUserPhoneAllowlisted(phone);
 }
 
@@ -231,8 +246,8 @@ function readAuthToken(req) {
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     const hasEmail = typeof data.email === "string" && data.email.length > 0;
-    const hasRolePhone = ["admin", "user"].includes(data.role) && isValidIndianMobile(data.phone);
-    if ((!hasEmail && !hasRolePhone) || !["user", "admin"].includes(data.role) ||
+    const hasRolePhone = ["admin", "user", "staff"].includes(data.role) && isValidIndianMobile(data.phone);
+    if ((!hasEmail && !hasRolePhone) || !["user", "admin", "staff"].includes(data.role) ||
         typeof data.expiresAt !== "number" || data.expiresAt <= Date.now()) {
       return null;
     }
@@ -254,6 +269,12 @@ function setAuthSession(req, res, email, role, phone) {
 }
 
 async function isAccountAllowed(accountType, email) {
+  if (accountType === "staff") {
+    return Boolean(await StaffAllowlist.exists({
+      email: email.toLowerCase(),
+      enabled: { $ne: false }
+    }));
+  }
   if (accountType === "admin") {
     const [listedByEmail, allowlisted] = await Promise.all([
       isEmailInAllowlist(ADMIN_EMAIL_COLLECTION_NAME, email),
@@ -294,6 +315,14 @@ async function isAuthorizedUserSession(session) {
     return isAccountAllowed("user", session.email.toLowerCase());
   }
   return Boolean(session.phone && await isUserPhoneAllowlisted(session.phone));
+}
+
+async function isAuthorizedStaffSession(session) {
+  if (!session || session.role !== "staff") return false;
+  if (session.email) {
+    return isAccountAllowed("staff", session.email.toLowerCase());
+  }
+  return Boolean(session.phone && await isStaffPhoneAllowlisted(session.phone));
 }
 
 const passwordResetRequestLimiter = rateLimit({
@@ -384,17 +413,23 @@ app.use(async (req, res, next) => {
   const session = readAuthToken(req);
   const isAdminPage = req.path === "/admin" || req.path === "/admin.html";
   const isUserPage = req.path === "/profile" || req.path === "/profile.html";
+  const isStaffPage = req.path === "/staff" || req.path === "/staff.html";
+  const isStaffPreview = isStaffPage && req.query.preview === "1";
   const isUserManagementApi = req.path === "/api/users" ||
     req.path.startsWith("/api/users/");
   const isAdminSessionApi = req.path === "/api/admin/session";
   const isAdminDatasetApi = req.path === "/api/admin/datasets" ||
     req.path.startsWith("/api/admin/datasets/");
+  const isStaffSessionApi = req.path === "/api/staff/session";
 
   if (isAdminPage && !(await isAuthorizedAdminSession(session))) {
     return res.redirect("/signin-admin.html");
   }
   if (isUserPage && !(await isAuthorizedUserSession(session))) {
     return res.redirect("/signin-user.html");
+  }
+  if (isStaffPage && !isStaffPreview && !(await isAuthorizedStaffSession(session))) {
+    return res.redirect("/signin-staff.html");
   }
   if (isUserManagementApi && !(await isAuthorizedAdminSession(session))) {
     return res.status(401).json({ success: false, message: "Admin sign-in is required." });
@@ -404,6 +439,9 @@ app.use(async (req, res, next) => {
   }
   if (isAdminSessionApi && !(await isAuthorizedAdminSession(session))) {
     return res.status(401).json({ success: false, message: "Admin sign-in is required." });
+  }
+  if (isStaffSessionApi && !(await isAuthorizedStaffSession(session))) {
+    return res.status(401).json({ success: false, message: "Staff sign-in is required." });
   }
   req.authSession = session;
   next();
@@ -419,6 +457,14 @@ app.post("/api/auth/logout", (req, res) => {
     path: "/"
   });
   res.json({ success: true });
+});
+
+app.get("/api/staff/session", async (req, res) => {
+  res.json({
+    success: true,
+    email: req.authSession.email,
+    phone: req.authSession.phone
+  });
 });
 
 function createEmailOtpRequestHandler(accountType) {
@@ -527,6 +573,16 @@ app.post(
   adminEmailOtpVerifyLimiter,
   createEmailOtpVerifyHandler("admin")
 );
+app.post(
+  "/api/auth/email/staff/request-code",
+  adminEmailOtpRequestLimiter,
+  createEmailOtpRequestHandler("staff")
+);
+app.post(
+  "/api/auth/email/staff/verify-code",
+  adminEmailOtpVerifyLimiter,
+  createEmailOtpVerifyHandler("staff")
+);
 
 async function getPhoneOtpCollection() {
   const collection = getGymDatabase().collection(PHONE_LOGIN_OTP_COLLECTION_NAME);
@@ -537,7 +593,7 @@ async function getPhoneOtpCollection() {
 app.post("/api/auth/phone/:role/request-code", phoneOtpRequestLimiter, async (req, res) => {
   const { role } = req.params;
   const phone = normalizeIndianMobile(req.body && req.body.phone);
-  if (!["user", "admin"].includes(role) || !phone) {
+  if (!["user", "admin", "staff"].includes(role) || !phone) {
     return res.status(400).json({
       success: false,
       message: "Enter a valid 10-digit Indian mobile number, with or without the +91 prefix."
@@ -613,7 +669,7 @@ app.post("/api/auth/phone/:role/verify-code", phoneOtpVerifyLimiter, async (req,
   const { role } = req.params;
   const phone = normalizeIndianMobile(req.body && req.body.phone);
   const code = req.body && req.body.code;
-  if (!["user", "admin"].includes(role) || !phone || typeof code !== "string" || !/^\d{6}$/.test(code)) {
+  if (!["user", "admin", "staff"].includes(role) || !phone || typeof code !== "string" || !/^\d{6}$/.test(code)) {
     return res.status(400).json({
       success: false,
       message: "Enter a valid phone number and six-digit WhatsApp code."
@@ -1016,6 +1072,34 @@ adminAllowlistSchema.index(
 );
 const AdminAllowlist = mongoose.model("AdminAllowlist", adminAllowlistSchema);
 
+const staffAllowlistSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  },
+  phone: {
+    type: String,
+    match: /^\+91[6-9]\d{9}$/
+  },
+  enabled: { type: Boolean, default: true }
+}, { collection: STAFF_ALLOWLIST_COLLECTION_NAME });
+staffAllowlistSchema.pre("validate", function () {
+  if (!this.email && !this.phone) {
+    this.invalidate("email", "A staff allowlist entry must include an email or phone number.");
+  }
+});
+staffAllowlistSchema.index(
+  { email: 1 },
+  { unique: true, partialFilterExpression: { email: { $type: "string" } } }
+);
+staffAllowlistSchema.index(
+  { phone: 1 },
+  { unique: true, partialFilterExpression: { phone: { $type: "string" } } }
+);
+const StaffAllowlist = mongoose.model("StaffAllowlist", staffAllowlistSchema);
+
 const passwordCredentialSchema = new mongoose.Schema({
   email: { type: String, required: true, lowercase: true, trim: true },
   accountType: { type: String, required: true, enum: ["user", "admin"] },
@@ -1034,38 +1118,49 @@ passwordResetTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 const PasswordResetToken = mongoose.model("PasswordResetToken", passwordResetTokenSchema);
 
 // ===== Static File Serving =====
-app.use(express.static(FRONTEND_DIR));
+if (hasFrontend) {
+  app.use(express.static(FRONTEND_DIR));
 
-// ===== Routes for Pages =====
-app.get("/", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
-app.get("/gym", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
-app.get("/services", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "services.html"))
-);
-app.get("/gallery", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "gallery.html"))
-);
-app.get("/teams", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "teams.html"))
-);
-app.get("/contact", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "contact.html"))
-);
-app.get("/faq", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "faq.html"))
-);
-app.get("/admin", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "admin.html"))
-);
-app.get("/profile", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "profile.html"))
-);
-app.get("/signin-user", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "signin-user.html"))
-);
-app.get("/signin-admin", (req, res) =>
-  res.sendFile(path.join(FRONTEND_DIR, "signin-admin.html"))
-);
+  // ===== Routes for Pages =====
+  app.get("/", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
+  app.get("/gym", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "gym.html")));
+  app.get("/services", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "services.html"))
+  );
+  app.get("/gallery", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "gallery.html"))
+  );
+  app.get("/teams", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "teams.html"))
+  );
+  app.get("/contact", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "contact.html"))
+  );
+  app.get("/faq", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "faq.html"))
+  );
+  app.get("/turf-booking", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "turf-booking.html"))
+  );
+  app.get("/admin", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "admin.html"))
+  );
+  app.get("/profile", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "profile.html"))
+  );
+  app.get("/signin-user", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "signin-user.html"))
+  );
+  app.get("/signin-admin", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "signin-admin.html"))
+  );
+  app.get("/signin-staff", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "signin-staff.html"))
+  );
+  app.get("/staff", (req, res) =>
+    res.sendFile(path.join(FRONTEND_DIR, "staff.html"))
+  );
+}
 
 // ===== API Endpoint for Contact Form =====
 app.post("/api/contact", contactSubmissionLimiter, async (req, res) => {
@@ -1663,6 +1758,12 @@ app.delete("/api/users/:id", async (req, res) => {
     });
   }
 });
+
+if (!hasFrontend) {
+  app.use((req, res) => {
+    res.status(404).json({ success: false, message: "Not found." });
+  });
+}
 
 // ===== Start Server =====
 if (require.main === module) {

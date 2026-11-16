@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#073f91">
+  <title>Staff Workspace | Pro Fitness Gym</title>
+  <link rel="stylesheet" href="gym.css">
+  <link rel="stylesheet" href="staff.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+  <header>
+    <nav>
+      <a class="staff-brand" href="gym.html" aria-label="Pro Fitness Gym home">
+        <img src="photos/logo.png" alt="Pro Fitness Gym">
+      </a>
+      <button class="hamburger" type="button" aria-label="Open navigation menu" aria-expanded="false">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+      <ul class="nav-links">
+        <a href="gym.html"><i class="fas fa-home"></i> Home</a>
+        <a href="teams.html"><i class="fas fa-users"></i> Our Team</a>
+        <a href="services.html"><i class="fas fa-dumbbell"></i> Services</a>
+        <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
+        <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+        <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
+      </ul>
+    </nav>
+  </header>
+
+  <p class="staff-access-status" id="staff-access-status" role="status" aria-live="polite">
+    Checking staff sign-in...
+  </p>
+  <main class="staff-page" id="staff-dashboard" hidden>
+    <section class="staff-hero">
+      <div>
+        <p class="staff-eyebrow">PRO FITNESS WORKSPACE</p>
+        <h1>Staff dashboard</h1>
+        <p>Manage customer records, leave requests, and daily attendance.</p>
+      </div>
+      <div class="staff-hero-icon" aria-hidden="true"><i class="fas fa-clipboard-list"></i></div>
+      <button class="staff-button staff-logout" id="staff-logout" type="button">
+        <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Log out
+      </button>
+    </section>
+
+    <p class="prototype-note">
+      <i class="fas fa-info-circle" aria-hidden="true"></i>
+      Customer, leave, and attendance records are saved in this browser only; they are not shared across devices.
+    </p>
+
+    <section class="staff-card profile-card" aria-labelledby="profile-heading">
+      <div class="profile-heading">
+        <div class="profile-avatar" id="profile-avatar" aria-hidden="true"><i class="fas fa-user"></i></div>
+        <div>
+          <p class="staff-eyebrow">YOUR PROFILE</p>
+          <h2 id="profile-heading">Personal information</h2>
+        </div>
+      </div>
+      <form id="profile-form" class="profile-form">
+        <label>
+          Name
+          <input id="staff-name" name="name" type="text" maxlength="80" placeholder="Staff name" required>
+        </label>
+        <label>
+          Position
+          <input id="staff-position" name="position" type="text" maxlength="80" placeholder="e.g. Fitness trainer" required>
+        </label>
+        <label>
+          Contact
+          <input id="staff-contact" name="contact" type="tel" maxlength="20" placeholder="Phone number" required>
+        </label>
+        <label>
+          Email
+          <input id="staff-email" name="email" type="email" maxlength="120" placeholder="name@example.com" required>
+        </label>
+        <label>
+          Branch
+          <input id="staff-branch" name="branch" type="text" maxlength="100" placeholder="Branch name" required>
+        </label>
+        <label class="profile-photo-field">
+          Profile photo <span>(optional, max 1 MB)</span>
+          <input id="staff-photo" type="file" accept="image/*">
+        </label>
+        <button class="staff-button secondary profile-save" type="submit">
+          <i class="fas fa-save" aria-hidden="true"></i> Save profile
+        </button>
+      </form>
+      <p class="form-status" id="profile-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="staff-card customer-card" aria-labelledby="customers-heading">
+      <div class="section-heading">
+        <div>
+          <p class="staff-eyebrow">MEMBERSHIP RECORDS</p>
+          <h2 id="customers-heading">Customers <span class="count-badge" id="customer-count">0</span></h2>
+        </div>
+        <i class="section-icon fas fa-users" aria-hidden="true"></i>
+      </div>
+      <form id="customer-form" class="customer-form">
+        <label>
+          Name
+          <input name="name" type="text" maxlength="100" autocomplete="name" required>
+        </label>
+        <label>
+          Contact
+          <input name="contact" type="tel" maxlength="20" autocomplete="tel" required>
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" maxlength="120" autocomplete="email" required>
+        </label>
+        <label>
+          Start date
+          <input name="startDate" type="date" required>
+        </label>
+        <label>
+          End date
+          <input name="endDate" type="date" required>
+        </label>
+        <label>
+          Fee status
+          <select name="feeStatus" required>
+            <option value="Due">Due</option>
+            <option value="Paid">Paid</option>
+          </select>
+        </label>
+        <button class="staff-button" type="submit"><i class="fas fa-user-plus" aria-hidden="true"></i> Add customer</button>
+      </form>
+      <p class="form-status" id="customer-status" role="status" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="staff-table">
+          <thead>
+            <tr><th>Name</th><th>Contact</th><th>Email</th><th>Start date</th><th>End date</th><th>Fee</th><th>Action</th></tr>
+          </thead>
+          <tbody id="customer-rows"></tbody>
+        </table>
+        <p class="empty-state" id="customers-empty">No customer records yet. Add a customer above.</p>
+      </div>
+    </section>
+
+    <section class="staff-card leave-card" aria-labelledby="leave-heading">
+      <div class="section-heading">
+        <div>
+          <p class="staff-eyebrow">TIME OFF</p>
+          <h2 id="leave-heading">Apply for leave</h2>
+        </div>
+        <i class="section-icon fas fa-calendar-alt" aria-hidden="true"></i>
+      </div>
+      <form id="leave-form" class="leave-form">
+        <label>
+          Name
+          <input id="leave-name" name="name" type="text" readonly required>
+        </label>
+        <label>
+          Contact
+          <input id="leave-contact" name="contact" type="tel" readonly required>
+        </label>
+        <label>
+          Start date
+          <input id="leave-start" name="startDate" type="date" required>
+        </label>
+        <label>
+          End date
+          <input id="leave-end" name="endDate" type="date" required>
+        </label>
+        <label>
+          Number of days
+          <input id="leave-days" name="days" type="number" value="0" readonly>
+        </label>
+        <label class="reason-field">
+          Reason <span>(optional)</span>
+          <textarea name="reason" rows="3" maxlength="500" placeholder="Add a note if you wish"></textarea>
+        </label>
+        <button class="staff-button" type="submit"><i class="fas fa-paper-plane" aria-hidden="true"></i> Submit leave request</button>
+      </form>
+      <p class="form-status" id="leave-status" role="status" aria-live="polite"></p>
+      <div class="subsection-heading">
+        <h3>Leave history</h3>
+        <span class="muted-copy">Requests saved in this browser</span>
+      </div>
+      <div class="table-wrap">
+        <table class="staff-table compact-table">
+          <thead>
+            <tr><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th></tr>
+          </thead>
+          <tbody id="leave-rows"></tbody>
+        </table>
+        <p class="empty-state" id="leave-empty">No leave requests yet.</p>
+      </div>
+    </section>
+
+    <section class="staff-card attendance-card" aria-labelledby="attendance-heading">
+      <div class="section-heading">
+        <div>
+          <p class="staff-eyebrow">DAILY LOG</p>
+          <h2 id="attendance-heading">Attendance</h2>
+        </div>
+        <i class="section-icon fas fa-clipboard-check" aria-hidden="true"></i>
+      </div>
+      <form id="attendance-form" class="attendance-form">
+        <label>
+          Date
+          <input id="attendance-date" name="date" type="date" required>
+        </label>
+        <label>
+          Status
+          <select name="status" required>
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+          </select>
+        </label>
+        <button class="staff-button" type="submit"><i class="fas fa-check" aria-hidden="true"></i> Save attendance</button>
+      </form>
+      <p class="form-status" id="attendance-status" role="status" aria-live="polite"></p>
+      <div class="subsection-heading">
+        <h3>Attendance history</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="staff-table compact-table">
+          <thead><tr><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="attendance-rows"></tbody>
+        </table>
+        <p class="empty-state" id="attendance-empty">No attendance records yet.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="staff-footer">© 2026 Pro Fitness Gym. All rights reserved.</footer>
+  <script src="api-config.js"></script>
+  <script src="staff.js"></script>
+  <script src="auth.js"></script>
+</body>
+
+</html>

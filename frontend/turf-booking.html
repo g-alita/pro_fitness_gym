@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071a3b">
+  <title>Book the Turf | Pro Fitness Gym</title>
+  <link rel="stylesheet" href="gym.css">
+  <link rel="stylesheet" href="turf-booking.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+  <header>
+    <nav>
+      <span><img src="photos/logo.png" alt="pro_fitness_logo"
+          style="width: auto; height: 50px; display: block;"></span>
+      <div class="hamburger" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+      </div>
+      <ul class="nav-links">
+        <a href="gym.html"><i class="fas fa-home"></i> Home</a>
+        <a href="teams.html"><i class="fas fa-users"></i> Our Team</a>
+        <a href="services.html"><i class="fas fa-dumbbell"></i> Services</a>
+        <a href="gallery.html"><i class="fas fa-images"></i> Gallery</a>
+        <a href="contact.html"><i class="fas fa-envelope"></i> Contact</a>
+        <a href="faq.html"><i class="fas fa-question-circle"></i> FAQ</a>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-label="Pro Fitness turf">
+      <div class="hero-photo" aria-hidden="true"></div>
+      <div class="hero-shade"></div>
+      <p class="hero-photo-placeholder" id="hero-photo-placeholder" aria-live="polite" hidden></p>
+      <div class="hero-content">
+        <p class="eyebrow">PRO FITNESS TURF · HAZARIBAGH</p>
+        <h1>Make room<br>for <span>your game.</span></h1>
+        <p class="hero-copy">Play. Practice. Enjoy.</p>
+        <a class="primary-button" href="#booking"><i class="far fa-calendar-check"></i> Book a session</a>
+      </div>
+      <div class="carousel-controls" aria-label="Turf photo views">
+        <button class="carousel-dot is-active" type="button" aria-label="Show turf view 1" aria-pressed="true"></button>
+        <button class="carousel-dot" type="button" aria-label="Show turf view 2" aria-pressed="false"></button>
+        <button class="carousel-dot" type="button" aria-label="Show turf view 3" aria-pressed="false"></button>
+      </div>
+    </section>
+
+    <section class="booking-section" id="booking">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR NEXT MATCH STARTS HERE</p>
+          <h2>Book your turf time</h2>
+        </div>
+        <p class="location"><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Indralok Tower, Hazaribagh</p>
+      </div>
+
+      <form class="booking-card" id="booking-form">
+        <fieldset class="booking-types">
+          <legend class="sr-only">Choose a booking type</legend>
+          <label class="type-option is-selected">
+            <input type="radio" name="bookingType" value="Group" checked>
+            <i class="fas fa-users" aria-hidden="true"></i><span>Group</span>
+          </label>
+          <label class="type-option">
+            <input type="radio" name="bookingType" value="Individual">
+            <i class="fas fa-user" aria-hidden="true"></i><span>Individual</span>
+          </label>
+          <label class="type-option">
+            <input type="radio" name="bookingType" value="Tournament">
+            <i class="fas fa-trophy" aria-hidden="true"></i><span>Tournament</span>
+          </label>
+        </fieldset>
+
+        <div class="booking-fields">
+          <section class="calendar-panel" aria-label="Choose a booking date">
+            <div class="panel-heading">
+              <h3><i class="far fa-calendar-alt" aria-hidden="true"></i> Select date</h3>
+            </div>
+            <div class="calendar">
+              <div class="calendar-toolbar">
+                <button id="previous-month" type="button" aria-label="Previous month"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                <h4 id="calendar-month" aria-live="polite"></h4>
+                <button id="next-month" type="button" aria-label="Next month"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+              </div>
+              <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+              </div>
+              <div class="calendar-grid" id="calendar-days" role="group" aria-label="Calendar dates"></div>
+            </div>
+            <p class="selected-date" id="selected-date-label" aria-live="polite"></p>
+          </section>
+          <section class="time-field" aria-label="Choose an available time slot">
+            <div class="panel-heading">
+              <h3><i class="far fa-clock" aria-hidden="true"></i> Select time slot</h3>
+            </div>
+            <div class="slot-table-wrap">
+              <table class="slot-table">
+                <caption class="sr-only">Available time slots for seven days starting from the selected date</caption>
+                <thead><tr id="slot-head"></tr></thead>
+                <tbody id="slot-rows"></tbody>
+              </table>
+            </div>
+            <p class="slot-help">Select one or more available session times.</p>
+            <div class="price-guide" aria-label="Turf session prices">
+              <p><span>6:00 AM – 5:00 PM</span><strong>₹900 / slot</strong></p>
+              <p><span>5:00 PM – 12:00 AM</span><strong>₹1,200 / slot</strong></p>
+            </div>
+          </section>
+        </div>
+
+        <details class="booking-rules" id="about-turf">
+          <summary><i class="fas fa-info-circle" aria-hidden="true"></i> Turf rules and booking information</summary>
+          <ul>
+            <li>Please arrive a few minutes before your selected session.</li>
+            <li>Wear suitable sports shoes on the turf.</li>
+            <li>Availability and booking are confirmed by the Pro Fitness team.</li>
+          </ul>
+        </details>
+
+        <button class="confirm-button" type="submit"><i class="far fa-check-circle" aria-hidden="true"></i> Request booking</button>
+        <p class="booking-message" id="booking-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">© 2026 Pro Fitness Gym. All rights reserved.</footer>
+  <script src="turf-booking.js"></script>
+  <script src="auth.js"></script>
+</body>
+
+</html>

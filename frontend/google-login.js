@@ -36,6 +36,9 @@
         localStorage.removeItem("userLoggedIn");
         localStorage.removeItem("userEmail");
         localStorage.removeItem("userPhone");
+        localStorage.removeItem("staffLoggedIn");
+        localStorage.removeItem("staffEmail");
+        localStorage.removeItem("staffPhone");
         window.location.replace("admin.html");
         return;
       }
@@ -46,6 +49,9 @@
       localStorage.removeItem("adminLoggedIn");
       localStorage.removeItem("adminEmail");
       localStorage.removeItem("adminPhone");
+      localStorage.removeItem("staffLoggedIn");
+      localStorage.removeItem("staffEmail");
+      localStorage.removeItem("staffPhone");
       window.location.replace("gym.html");
     } catch (error) {
       console.error(`Google ${role} sign-in failed:`, error);
@@ -80,6 +86,9 @@
       localStorage.removeItem("userLoggedIn");
       localStorage.removeItem("userEmail");
       localStorage.removeItem("userPhone");
+      localStorage.removeItem("staffLoggedIn");
+      localStorage.removeItem("staffEmail");
+      localStorage.removeItem("staffPhone");
       window.location.replace("admin.html");
     } catch (error) {
       console.error("Google admin sign-in failed:", error);

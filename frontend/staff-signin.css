@@ -1,0 +1,54 @@
+.staff-signin-container {
+  max-width: 720px;
+}
+
+.staff-signin-brand {
+  display: inline-block;
+}
+
+.staff-signin-brand img {
+  display: block;
+  width: 150px;
+  height: auto;
+  margin: 0 auto 5px;
+}
+
+.staff-signin-title {
+  margin: 0 0 14px;
+  color: hsl(223, 98%, 45%, 0.8);
+  font-size: 25px;
+}
+
+.staff-signin-container > h2 {
+  margin: 0 0 20px;
+}
+
+.staff-signin-guidance {
+  margin: 12px 0 0;
+  color: #657187;
+  font-size: 13px;
+  text-align: center;
+}
+
+.staff-signin-container .admin-login-panel form {
+  gap: 12px;
+}
+
+.staff-signin-container button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 480px) {
+  .staff-signin-container {
+    padding: 18px;
+  }
+
+  .staff-signin-brand img {
+    width: 120px;
+  }
+
+  .staff-signin-title {
+    font-size: 22px;
+  }
+}

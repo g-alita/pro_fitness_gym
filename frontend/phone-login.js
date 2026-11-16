@@ -1,11 +1,13 @@
 (function() {
   function initializePhoneOtpLogin(role) {
     const isAdmin = role === 'admin';
-    const prefix = isAdmin ? 'admin' : 'user';
+    const isStaff = role === 'staff';
+    const prefix = isAdmin ? 'admin' : role;
+    const roleLabel = isAdmin ? 'Admin' : isStaff ? 'Staff' : 'User';
     const phoneInput = document.getElementById(`${prefix}Phone`);
-    const requestButton = document.getElementById(`request${isAdmin ? 'Admin' : 'User'}PhoneOtp`);
+    const requestButton = document.getElementById(`request${roleLabel}PhoneOtp`);
     const codeInput = document.getElementById(`${prefix}PhoneOtp`);
-    const verifyButton = document.getElementById(`verify${isAdmin ? 'Admin' : 'User'}PhoneOtp`);
+    const verifyButton = document.getElementById(`verify${roleLabel}PhoneOtp`);
     const status = document.getElementById(`${prefix}PhoneOtpStatus`);
 
     requestButton.addEventListener('click', async function() {
@@ -54,15 +56,32 @@
           sessionStorage.removeItem('adminGoogleAccessToken');
           localStorage.setItem('adminLoggedIn', 'true');
           localStorage.setItem('adminPhone', result.phone);
+          localStorage.removeItem('staffLoggedIn');
+          localStorage.removeItem('staffEmail');
+          localStorage.removeItem('staffPhone');
           localStorage.removeItem('adminEmail');
           localStorage.removeItem('userLoggedIn');
           localStorage.removeItem('userEmail');
           localStorage.removeItem('userPhone');
           window.location.href = 'admin.html';
+        } else if (isStaff) {
+          localStorage.setItem('staffLoggedIn', 'true');
+          localStorage.setItem('staffPhone', result.phone);
+          localStorage.removeItem('staffEmail');
+          localStorage.removeItem('adminLoggedIn');
+          localStorage.removeItem('adminEmail');
+          localStorage.removeItem('adminPhone');
+          localStorage.removeItem('userLoggedIn');
+          localStorage.removeItem('userEmail');
+          localStorage.removeItem('userPhone');
+          window.location.href = 'staff.html';
         } else {
           localStorage.setItem('userLoggedIn', 'true');
           localStorage.setItem('userPhone', result.phone);
           localStorage.removeItem('userEmail');
+          localStorage.removeItem('staffLoggedIn');
+          localStorage.removeItem('staffEmail');
+          localStorage.removeItem('staffPhone');
           localStorage.removeItem('adminLoggedIn');
           localStorage.removeItem('adminEmail');
           localStorage.removeItem('adminPhone');

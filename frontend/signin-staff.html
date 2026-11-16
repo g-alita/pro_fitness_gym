@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Sign In | Pro Fitness Gym</title>
+  <link rel="stylesheet" href="signin.css">
+  <link rel="stylesheet" href="staff-signin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+  <div class="blur-overlay"></div>
+  <main class="container admin-signin-container staff-signin-container">
+    <a class="staff-signin-brand" href="gym.html" aria-label="Pro Fitness Gym home">
+      <img src="photos/logo.png" alt="Pro Fitness Gym logo">
+    </a>
+    <h1 class="staff-signin-title">Pro Fitness Gym</h1>
+    <h2><i class="fas fa-id-badge" aria-hidden="true"></i> SIGN IN AS STAFF</h2>
+
+    <div class="signin-form admin-signin-form">
+      <div class="admin-login-tabs" role="tablist" aria-label="Staff sign-in method">
+        <button type="button" class="admin-login-tab active" id="staffEmailTab" role="tab"
+          aria-selected="true" aria-controls="staffEmailPanel">
+          <i class="fas fa-envelope" aria-hidden="true"></i> Email
+        </button>
+        <button type="button" class="admin-login-tab" id="staffPhoneTab" role="tab"
+          aria-selected="false" aria-controls="staffPhonePanel">
+          <i class="fas fa-mobile-alt" aria-hidden="true"></i> Phone
+        </button>
+      </div>
+
+      <div class="admin-login-options">
+        <section class="admin-login-panel" id="staffEmailPanel" role="tabpanel"
+          aria-labelledby="staffEmailTab">
+          <h3><i class="fas fa-envelope" aria-hidden="true"></i> Email OTP sign in</h3>
+          <form id="staffEmailForm">
+            <label class="sr-only" for="staffEmail">Staff email address</label>
+            <input id="staffEmail" type="email" placeholder="Staff email address"
+              autocomplete="email" required>
+            <button type="submit" id="requestStaffEmailOtp">SEND SIGN-IN CODE</button>
+            <label class="sr-only" for="staffEmailOtp">Six-digit email sign-in code</label>
+            <input id="staffEmailOtp" type="text" placeholder="6-digit email code"
+              autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}"
+              minlength="6" maxlength="6" hidden>
+            <button type="button" id="verifyStaffEmailOtp" hidden>VERIFY CODE AND SIGN IN</button>
+            <p id="staffEmailStatus" class="auth-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="admin-login-panel" id="staffPhonePanel" role="tabpanel"
+          aria-labelledby="staffPhoneTab" hidden>
+          <h3><i class="fas fa-mobile-alt" aria-hidden="true"></i> WhatsApp OTP sign in</h3>
+          <label class="sr-only" for="staffPhone">Staff phone number</label>
+          <input id="staffPhone" type="tel" placeholder="Phone (10 digits or +91XXXXXXXXXX)"
+            autocomplete="tel" inputmode="tel" pattern="(\+91)?[6-9][0-9]{9}"
+            minlength="10" maxlength="13">
+          <label class="sr-only" for="staffPhoneOtp">Six-digit WhatsApp sign-in code</label>
+          <input id="staffPhoneOtp" type="text" placeholder="6-digit WhatsApp code"
+            autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}"
+            minlength="6" maxlength="6" hidden>
+          <button type="button" id="requestStaffPhoneOtp">SEND WHATSAPP CODE</button>
+          <button type="button" id="verifyStaffPhoneOtp" hidden>VERIFY CODE AND SIGN IN</button>
+          <p id="staffPhoneOtpStatus" class="auth-status" role="status" aria-live="polite"></p>
+          <p class="staff-signin-guidance">Only phone numbers enabled for staff access can sign in.</p>
+        </section>
+      </div>
+
+      <div class="links">
+        <p><a href="gym.html"><i class="fas fa-home" aria-hidden="true"></i> Back to Home</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="api-config.js"></script>
+  <script src="phone-login.js"></script>
+  <script src="staff-signin.js"></script>
+</body>
+
+</html>
