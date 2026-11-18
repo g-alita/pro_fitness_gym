@@ -34,7 +34,7 @@ jobs:
 
       - name: Package backend
         run: |
-          cd profitnessgym/backend
+          cd backend
           zip -r "$GITHUB_WORKSPACE/lambda.zip" . \
             -x ".env" \
             -x ".git/*"
