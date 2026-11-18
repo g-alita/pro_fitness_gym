@@ -6,7 +6,7 @@ on:
     branches:
       - publish1
     paths:
-      - 'profitnessgym/backend/**'
+      - 'backend/**'
       - '.github/workflows/deploy-lambda.yml'
   workflow_dispatch:
 
